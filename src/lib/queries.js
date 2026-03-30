@@ -26,10 +26,12 @@ export async function getSermonsByPillar(pillarId) {
     .from('sermon_pillars')
     .select('sermons!inner(*)')
     .eq('pillar_id', pillarId)
-    .eq('sermons.review_status', 'approved')
-    .order('created_at', { ascending: false });
+    .eq('sermons.review_status', 'approved');
   if (error) throw error;
-  return data.map((row) => row.sermons).filter(Boolean);
+  return data
+    .map((row) => row.sermons)
+    .filter(Boolean)
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 }
 
 export async function searchSermons(query) {
