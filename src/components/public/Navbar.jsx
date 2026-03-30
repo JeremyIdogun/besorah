@@ -6,17 +6,13 @@ export default function Navbar() {
     <nav className="bg-card-bg border-b border-amber-100 shadow-soft sticky top-0 z-50">
       <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
-          <img
-            src="/logos/euangelion_refined_clean_icon.svg"
-            alt=""
-            aria-hidden="true"
-            className="w-8 h-8"
-          />
-          <img
-            src="/logos/euangelion_monochrome_logo.svg"
-            alt="Euangelion"
-            className="hidden sm:block h-8 w-auto"
-          />
+          <span className="text-2xl">✝</span>
+          <span
+            className="text-xl font-bold tracking-wide"
+            style={{ color: '#8B4513', fontFamily: 'Georgia, serif' }}
+          >
+            Euangelion
+          </span>
         </Link>
 
         <div className="flex items-center gap-6">
