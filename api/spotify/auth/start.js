@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import { requireAdminSession } from '../../_lib/admin-auth.js';
 import { getSpotifyAuthUrl } from '../_lib/spotify.js';
 
 function isSecureRequest(req) {
@@ -23,6 +24,7 @@ export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+  if (!requireAdminSession(req, res)) return;
 
   try {
     const state = crypto.randomBytes(16).toString('hex');
@@ -37,4 +39,3 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: err.message });
   }
 }
-

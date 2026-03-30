@@ -1,4 +1,5 @@
 import { suggestPillars } from '../../src/lib/classifier.js';
+import { requireAdminSession } from '../_lib/admin-auth.js';
 import {
   createSupabaseAdminClient,
   fetchAllSpotifyShowEpisodes,
@@ -12,6 +13,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+  if (!requireAdminSession(req, res)) return;
 
   const { showId } = req.body;
   if (!showId) return res.status(400).json({ error: 'showId is required' });

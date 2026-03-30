@@ -16,6 +16,7 @@ SPOTIFY_MARKET=US
 SPOTIFY_REDIRECT_URI=https://your-domain.com/api/spotify/auth/callback
 ADMIN_EMAIL=
 ADMIN_PASSWORD=
+ADMIN_SESSION_SECRET=
 CRON_SECRET=
 ```
 
@@ -24,6 +25,8 @@ Notes:
 - `SPOTIFY_MARKET` controls episode availability lookup (`US` default).
 - `SPOTIFY_REDIRECT_URI` must match the Redirect URI configured in your Spotify app dashboard.
 - `SUPABASE_SERVICE_ROLE_KEY` is required by API routes that write ingestion data.
+- `ADMIN_EMAIL` + `ADMIN_PASSWORD` are used by `/api/admin/login`.
+- `ADMIN_SESSION_SECRET` signs the HttpOnly admin session cookie.
 
 ## 2. Database setup
 
@@ -31,6 +34,7 @@ Run the initial migration and seed:
 
 - [`supabase/migrations/001_initial.sql`](/Users/jeremyidogun/Desktop/Projects/euangelion/supabase/migrations/001_initial.sql)
 - [`supabase/migrations/002_spotify_oauth.sql`](/Users/jeremyidogun/Desktop/Projects/euangelion/supabase/migrations/002_spotify_oauth.sql)
+- [`supabase/migrations/003_admin_auth_rls.sql`](/Users/jeremyidogun/Desktop/Projects/euangelion/supabase/migrations/003_admin_auth_rls.sql)
 - [`supabase/seed.sql`](/Users/jeremyidogun/Desktop/Projects/euangelion/supabase/seed.sql)
 
 You can run these using Supabase SQL editor or your local Supabase CLI workflow.
@@ -109,18 +113,30 @@ npx vercel dev
 ```
 
 Then in admin (via Vercel dev URL):
+- `/admin/login` to sign in
 - `/admin/shows` to add a Spotify show
 - Click `Sync` to pull latest episodes
 - `/admin/review` to approve/edit pillar tags
 
 ## 5. Manual endpoint tests
 
+Admin routes now require a signed admin session cookie.
+Authenticate first:
+
+```bash
+curl -X POST http://localhost:3000/api/admin/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"<ADMIN_EMAIL>","password":"<ADMIN_PASSWORD>"}' \
+  -c /tmp/euangelion-admin-cookie.txt
+```
+
 Add show:
 
 ```bash
 curl -X POST http://localhost:3000/api/spotify/add-show \
   -H "Content-Type: application/json" \
-  -d '{"showId":"<spotify_show_id>"}'
+  -d '{"showId":"<spotify_show_id>"}' \
+  -b /tmp/euangelion-admin-cookie.txt
 ```
 
 Sync show:
@@ -128,7 +144,8 @@ Sync show:
 ```bash
 curl -X POST http://localhost:3000/api/spotify/sync \
   -H "Content-Type: application/json" \
-  -d '{"showId":"<spotify_show_id>"}'
+  -d '{"showId":"<spotify_show_id>"}' \
+  -b /tmp/euangelion-admin-cookie.txt
 ```
 
 Cron sync:
@@ -143,5 +160,6 @@ Import saved episodes:
 ```bash
 curl -X POST http://localhost:3000/api/spotify/import-saved \
   -H "Content-Type: application/json" \
-  -d '{}'
+  -d '{}' \
+  -b /tmp/euangelion-admin-cookie.txt
 ```

@@ -5,9 +5,11 @@ import Pillar from './pages/public/Pillar';
 import Search from './pages/public/Search';
 import SermonDetail from './pages/public/SermonDetail';
 import Dashboard from './pages/admin/Dashboard';
+import AdminLogin from './pages/admin/Login';
 import Shows from './pages/admin/Shows';
 import ReviewQueue from './pages/admin/ReviewQueue';
 import SermonEdit from './pages/admin/SermonEdit';
+import AdminGate from './components/admin/AdminGate';
 
 function PublicLayout({ children }) {
   return (
@@ -57,10 +59,39 @@ export default function App() {
         />
 
         {/* Admin routes */}
-        <Route path="/admin" element={<Dashboard />} />
-        <Route path="/admin/shows" element={<Shows />} />
-        <Route path="/admin/review" element={<ReviewQueue />} />
-        <Route path="/admin/sermons/:id" element={<SermonEdit />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route
+          path="/admin"
+          element={
+            <AdminGate>
+              <Dashboard />
+            </AdminGate>
+          }
+        />
+        <Route
+          path="/admin/shows"
+          element={
+            <AdminGate>
+              <Shows />
+            </AdminGate>
+          }
+        />
+        <Route
+          path="/admin/review"
+          element={
+            <AdminGate>
+              <ReviewQueue />
+            </AdminGate>
+          }
+        />
+        <Route
+          path="/admin/sermons/:id"
+          element={
+            <AdminGate>
+              <SermonEdit />
+            </AdminGate>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

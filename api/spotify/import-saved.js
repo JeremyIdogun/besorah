@@ -1,4 +1,5 @@
 import { suggestPillars } from '../../src/lib/classifier.js';
+import { requireAdminSession } from '../_lib/admin-auth.js';
 import {
   createSupabaseAdminClient,
   getSpotifyMarket,
@@ -166,6 +167,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+  if (!requireAdminSession(req, res)) return;
 
   const requestedMaxEpisodes = Number(req.body?.maxEpisodes);
   const maxEpisodes =

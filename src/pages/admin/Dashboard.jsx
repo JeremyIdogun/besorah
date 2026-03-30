@@ -26,6 +26,14 @@ export default function Dashboard() {
       .finally(() => setLoading(false));
   }, []);
 
+  async function handleLogout() {
+    await fetch('/api/admin/logout', {
+      method: 'POST',
+      credentials: 'include',
+    });
+    window.location.href = '/admin/login';
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-5xl mx-auto px-4 py-10">
@@ -45,6 +53,14 @@ export default function Dashboard() {
           >
             ← Public site
           </Link>
+        </div>
+        <div className="flex justify-end mb-6">
+          <button
+            onClick={handleLogout}
+            className="text-xs font-ui text-muted hover:text-primary transition-colors"
+          >
+            Sign out
+          </button>
         </div>
 
         {/* Stats */}

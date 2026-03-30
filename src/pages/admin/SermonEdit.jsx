@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { getAdminSermonById, updateSermonReview, upsertSermonPillars, logReviewAction } from '../../lib/queries';
+import { getAdminSermonById, saveAdminSermonReview } from '../../lib/queries';
 import TagSelector from '../../components/admin/TagSelector';
 import { ArrowLeft, Save, Check } from 'lucide-react';
 
@@ -37,9 +37,12 @@ export default function SermonEdit() {
     setSaving(true);
     setError(null);
     try {
-      await updateSermonReview(id, { reviewStatus, ...form });
-      await upsertSermonPillars(id, selectedPillarIds, 'manual');
-      await logReviewAction(id, reviewStatus, '');
+      await saveAdminSermonReview({
+        sermonId: id,
+        reviewStatus,
+        ...form,
+        pillarIds: selectedPillarIds,
+      });
       setSaved(true);
       setTimeout(() => navigate('/admin/review'), 1000);
     } catch (err) {
