@@ -4,8 +4,8 @@ import {
   requireAdminSession,
   setAdminSessionCookie,
   verifyAdminCredentials,
-} from '../../lib/server/admin-auth.js';
-import { createSupabaseAdminClient } from '../../lib/server/spotify.js';
+} from '../lib/server/admin-auth.js';
+import { createSupabaseAdminClient } from '../lib/server/spotify.js';
 
 const supabase = createSupabaseAdminClient();
 const VALID_REVIEW_STATUSES = new Set(['approved', 'rejected', 'unreviewed']);
