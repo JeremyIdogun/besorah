@@ -1,45 +1,16 @@
-import { createClient } from '@supabase/supabase-js';
 import { suggestPillars } from '../../src/lib/classifier.js';
+import {
+  createSupabaseAdminClient,
+  fetchAllSpotifyShowEpisodes,
+  fetchSpotifyShow,
+  getSpotifyToken,
+} from './_lib/spotify.js';
 
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-);
-
-async function getSpotifyToken() {
-  const creds = Buffer.from(
-    `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`,
-  ).toString('base64');
-
-  const res = await fetch('https://accounts.spotify.com/api/token', {
-    method: 'POST',
-    headers: {
-      Authorization: `Basic ${creds}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: 'grant_type=client_credentials',
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(`Spotify token error: ${data.error}`);
-  return data.access_token;
-}
+const supabase = createSupabaseAdminClient();
 
 async function syncShow(token, showId, pillarBySlug) {
-  const showRes = await fetch(`https://api.spotify.com/v1/shows/${showId}?market=GB`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  const show = await showRes.json();
-  if (!showRes.ok) throw new Error(`Show fetch error: ${show.error?.message}`);
-
-  const episodes = [];
-  let url = `https://api.spotify.com/v1/shows/${showId}/episodes?market=GB&limit=50`;
-  while (url) {
-    const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-    const d = await r.json();
-    if (!r.ok) break;
-    episodes.push(...d.items);
-    url = d.next;
-  }
+  const show = await fetchSpotifyShow(token, showId);
+  const episodes = await fetchAllSpotifyShowEpisodes(token, showId);
 
   let newEpisodes = 0;
   let updatedEpisodes = 0;
