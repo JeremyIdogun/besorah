@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1100" width="1600" height="1100" role="img" aria-labelledby="title desc">
+<title>Euangelion logo</title>
+<desc>Open book with radiant cross and the word Euangelion with Greek subtitle εὐαγγέλιον.</desc>
+
+<defs>
+  <linearGradient id="goldGrad" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#F4D35E"/>
+    <stop offset="100%" stop-color="#D4A017"/>
+  </linearGradient>
+  <linearGradient id="pageGrad" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#FFFDF7"/>
+    <stop offset="100%" stop-color="#F8E8BE"/>
+  </linearGradient>
+  <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+    <feGaussianBlur stdDeviation="8" result="blur"/>
+    <feMerge>
+      <feMergeNode in="blur"/>
+      <feMergeNode in="SourceGraphic"/>
+    </feMerge>
+  </filter>
+</defs>
+
+<g id="icon">
+  <g opacity="0.18">
+<path d="M365.0,172.1 L319.6,34.2 L373.5,169.0 Z" fill="#5C3923"/>
+<path d="M384.5,166.3 L371.1,21.8 L393.4,165.2 Z" fill="#5C3923"/>
+<path d="M404.7,165.1 L424.1,21.2 L413.7,166.0 Z" fill="#5C3923"/>
+<path d="M424.7,168.5 L475.8,32.6 L433.3,171.4 Z" fill="#5C3923"/>
+<path d="M443.5,176.2 L523.7,55.2 L451.1,180.9 Z" fill="#5C3923"/>
+<path d="M460.0,188.0 L565.3,88.0 L466.4,194.3 Z" fill="#5C3923"/>
+<path d="M473.5,203.1 L598.5,129.2 L478.3,210.7 Z" fill="#5C3923"/>
+<path d="M483.3,220.9 L621.6,176.9 L486.3,229.4 Z" fill="#5C3923"/>
+<path d="M488.8,240.4 L633.5,228.5 L489.8,249.3 Z" fill="#5C3923"/>
+<path d="M489.8,260.7 L633.5,281.5 L488.8,269.6 Z" fill="#5C3923"/>
+<path d="M486.3,280.6 L621.6,333.1 L483.3,289.1 Z" fill="#5C3923"/>
+<path d="M478.3,299.3 L598.5,380.8 L473.5,306.9 Z" fill="#5C3923"/>
+<path d="M466.4,315.7 L565.3,422.0 L460.0,322.0 Z" fill="#5C3923"/>
+<path d="M451.1,329.1 L523.7,454.8 L443.5,333.8 Z" fill="#5C3923"/>
+<path d="M433.3,338.6 L475.8,477.4 L424.7,341.5 Z" fill="#5C3923"/>
+<path d="M413.7,344.0 L424.1,488.8 L404.7,344.9 Z" fill="#5C3923"/>
+<path d="M393.4,344.8 L371.1,488.2 L384.5,343.7 Z" fill="#5C3923"/>
+<path d="M373.5,341.0 L319.6,475.8 L365.0,337.9 Z" fill="#5C3923"/>
+</g>
+  <g filter="url(#softGlow)">
+    <path d="M372 122 H428 V214 H505 V270 H428 V416 H372 V270 H295 V214 H372 Z"
+          fill="#5C3923" stroke="#5C3923" stroke-width="6" rx="10"/>
+  </g>
+  <g>
+    <path d="M120 388 C180 330, 255 316, 350 352 L400 372 L400 454 L350 432 C262 394, 195 400, 126 454 Z"
+          fill="#F4E7D0" stroke="#5C3923" stroke-width="6"/>
+    <path d="M680 388 C620 330, 545 316, 450 352 L400 372 L400 454 L450 432 C538 394, 605 400, 674 454 Z"
+          fill="#F4E7D0" stroke="#5C3923" stroke-width="6"/>
+    <path d="M124 454 C194 412, 261 406, 350 444" fill="none" stroke="#D2B06A" stroke-width="5" stroke-linecap="round"/>
+    <path d="M676 454 C606 412, 539 406, 450 444" fill="none" stroke="#D2B06A" stroke-width="5" stroke-linecap="round"/>
+    <path d="M390 372 Q400 392 410 372 L410 458 Q400 468 390 458 Z" fill="#5C3923"/>
+  </g>
+</g>
+
+<g font-family="Georgia, 'Times New Roman', serif" fill="#5C3923">
+  <text x="800" y="720" text-anchor="middle" font-size="140" font-weight="700" letter-spacing="2">EUANGELION</text>
+  <line x1="430" y1="865" x2="565" y2="865" stroke="#5C3923" stroke-width="5"/>
+  <text x="800" y="890" text-anchor="middle" font-size="82" font-style="italic">εὐαγγέλιον</text>
+  <line x1="1035" y1="865" x2="1170" y2="865" stroke="#5C3923" stroke-width="5"/>
+</g>
+</svg>

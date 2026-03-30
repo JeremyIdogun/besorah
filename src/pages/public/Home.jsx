@@ -29,19 +29,11 @@ export default function Home() {
         }}
       >
         <div className="max-w-2xl mx-auto">
-          <p className="text-4xl mb-4">✝</p>
-          <h1
-            className="text-4xl md:text-5xl font-bold mb-4 leading-tight"
-            style={{ color: '#8B4513', fontFamily: 'Georgia, serif' }}
-          >
-            Euangelion
-          </h1>
-          <p
-            className="text-lg mb-2 font-normal italic"
-            style={{ color: '#A0856B', fontFamily: 'Georgia, serif' }}
-          >
-            εὐαγγέλιον — Good News, Organised by Theme
-          </p>
+          <img
+            src="/logos/euangelion_primary_full_logo.svg"
+            alt="Euangelion — Good News, Organised by Theme"
+            className="w-full max-w-md mx-auto mb-6"
+          />
           <p className="text-base text-muted font-ui mb-8 max-w-md mx-auto">
             Discover Christian sermons curated by theme. Find preaching that speaks to where you are.
           </p>
