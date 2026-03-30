@@ -2,7 +2,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { getSpotifyShows } from '../../lib/queries';
 import ShowImportForm from '../../components/admin/ShowImportForm';
 import SyncButton from '../../components/admin/SyncButton';
-import { Link } from 'react-router-dom';
+import SpotifyLibraryImportCard from '../../components/admin/SpotifyLibraryImportCard';
+import { Link, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 
 function formatDate(d) {
@@ -13,6 +14,10 @@ function formatDate(d) {
 export default function Shows() {
   const [shows, setShows] = useState([]);
   const [loading, setLoading] = useState(true);
+  const location = useLocation();
+  const query = new URLSearchParams(location.search);
+  const spotifyAuth = query.get('spotifyAuth');
+  const spotifyAuthReason = query.get('reason');
 
   const load = useCallback(() => {
     setLoading(true);
@@ -49,6 +54,12 @@ export default function Shows() {
           <h2 className="text-base font-bold text-text-main font-ui mb-4">Add New Show</h2>
           <ShowImportForm onImported={load} />
         </div>
+
+        <SpotifyLibraryImportCard
+          authState={spotifyAuth}
+          authReason={spotifyAuthReason}
+          onImported={load}
+        />
 
         <h2
           className="text-lg font-bold mb-4"

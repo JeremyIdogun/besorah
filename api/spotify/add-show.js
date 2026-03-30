@@ -1,55 +1,12 @@
-import { createClient } from '@supabase/supabase-js';
 import { suggestPillars } from '../../src/lib/classifier.js';
+import {
+  createSupabaseAdminClient,
+  fetchAllSpotifyShowEpisodes,
+  fetchSpotifyShow,
+  getSpotifyToken,
+} from './_lib/spotify.js';
 
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-);
-
-async function getSpotifyToken() {
-  const creds = Buffer.from(
-    `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`,
-  ).toString('base64');
-
-  const res = await fetch('https://accounts.spotify.com/api/token', {
-    method: 'POST',
-    headers: {
-      Authorization: `Basic ${creds}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: 'grant_type=client_credentials',
-  });
-
-  const data = await res.json();
-  if (!res.ok) throw new Error(`Spotify token error: ${data.error}`);
-  return data.access_token;
-}
-
-async function fetchShow(token, showId) {
-  const res = await fetch(`https://api.spotify.com/v1/shows/${showId}?market=GB`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(`Spotify show error: ${data.error?.message}`);
-  return data;
-}
-
-async function fetchAllEpisodes(token, showId) {
-  const episodes = [];
-  let url = `https://api.spotify.com/v1/shows/${showId}/episodes?market=GB&limit=50`;
-
-  while (url) {
-    const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(`Spotify episodes error: ${data.error?.message}`);
-    episodes.push(...data.items);
-    url = data.next;
-  }
-
-  return episodes;
-}
+const supabase = createSupabaseAdminClient();
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -68,7 +25,7 @@ export default async function handler(req, res) {
 
   try {
     const token = await getSpotifyToken();
-    const show = await fetchShow(token, showId);
+    const show = await fetchSpotifyShow(token, showId);
 
     // Upsert show
     await supabase.from('spotify_shows').upsert(
@@ -85,7 +42,7 @@ export default async function handler(req, res) {
       { onConflict: 'spotify_show_id' },
     );
 
-    const episodes = await fetchAllEpisodes(token, showId);
+    const episodes = await fetchAllSpotifyShowEpisodes(token, showId);
     let episodesImported = 0;
 
     // Fetch all pillars for slug→id mapping

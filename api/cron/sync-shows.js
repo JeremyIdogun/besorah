@@ -1,28 +1,13 @@
-import { createClient } from '@supabase/supabase-js';
+/* global process */
 import { suggestPillars } from '../../src/lib/classifier.js';
+import {
+  createSupabaseAdminClient,
+  fetchAllSpotifyShowEpisodes,
+  fetchSpotifyShow,
+  getSpotifyToken,
+} from '../spotify/_lib/spotify.js';
 
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-);
-
-async function getSpotifyToken() {
-  const creds = Buffer.from(
-    `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`,
-  ).toString('base64');
-
-  const res = await fetch('https://accounts.spotify.com/api/token', {
-    method: 'POST',
-    headers: {
-      Authorization: `Basic ${creds}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: 'grant_type=client_credentials',
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(`Spotify token error: ${data.error}`);
-  return data.access_token;
-}
+const supabase = createSupabaseAdminClient();
 
 export default async function handler(req, res) {
   // Validate cron secret to prevent unauthorised triggers
@@ -53,21 +38,8 @@ export default async function handler(req, res) {
     const run = runInsert.data;
 
     try {
-      const showRes = await fetch(
-        `https://api.spotify.com/v1/shows/${show.spotify_show_id}?market=GB`,
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
-      const showData = await showRes.json();
-
-      const episodes = [];
-      let url = `https://api.spotify.com/v1/shows/${show.spotify_show_id}/episodes?market=GB&limit=50`;
-      while (url) {
-        const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-        const d = await r.json();
-        if (!r.ok) break;
-        episodes.push(...d.items);
-        url = d.next;
-      }
+      const showData = await fetchSpotifyShow(token, show.spotify_show_id);
+      const episodes = await fetchAllSpotifyShowEpisodes(token, show.spotify_show_id);
 
       let newEpisodes = 0;
       let updatedEpisodes = 0;

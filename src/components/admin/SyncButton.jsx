@@ -16,7 +16,12 @@ export default function SyncButton({ showId, label = 'Sync', onSynced }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ showId }),
       });
-      const data = await res.json();
+      let data = null;
+      try {
+        data = await res.json();
+      } catch {
+        data = null;
+      }
       if (!res.ok) throw new Error(data.error || 'Sync failed');
       setResult(`Synced: ${data.newEpisodes} new, ${data.updatedEpisodes} updated.`);
       onSynced?.();

@@ -2,14 +2,40 @@ import { useState } from 'react';
 import { Plus, Loader } from 'lucide-react';
 
 function extractShowId(input) {
+  const value = input.trim();
+  if (!value) return { showId: null, error: 'Please enter a Spotify show URL or ID.' };
+
+  if (/spotify\.com\/collection\/your-episodes/i.test(value)) {
+    return {
+      showId: null,
+      error:
+        'Your Episodes cannot be added as a show. Use "Connect Spotify" and "Import Saved Episodes" instead.',
+    };
+  }
+
+  if (/spotify\.com\/playlist\//i.test(value)) {
+    return {
+      showId: null,
+      error: 'Playlist URLs are not supported in Add Show. Use a podcast show URL or show ID.',
+    };
+  }
+
   // Handle full Spotify URLs: https://open.spotify.com/show/XXXX
-  const match = input.match(/spotify\.com\/show\/([A-Za-z0-9]+)/);
-  if (match) return match[1];
+  const match = value.match(/spotify\.com\/show\/([A-Za-z0-9]+)/);
+  if (match) return { showId: match[1], error: null };
   // Handle spotify:show:XXXX URIs
-  const uri = input.match(/spotify:show:([A-Za-z0-9]+)/);
-  if (uri) return uri[1];
+  const uri = value.match(/spotify:show:([A-Za-z0-9]+)/);
+  if (uri) return { showId: uri[1], error: null };
+
+  if (/^https?:\/\//i.test(value)) {
+    return {
+      showId: null,
+      error: 'Invalid show URL. Please paste a Spotify show URL or show ID.',
+    };
+  }
+
   // Assume bare ID
-  return input.trim();
+  return { showId: value, error: null };
 }
 
 export default function ShowImportForm({ onImported }) {
@@ -22,8 +48,12 @@ export default function ShowImportForm({ onImported }) {
     e.preventDefault();
     setError(null);
     setSuccess(null);
-    const showId = extractShowId(input);
-    if (!showId) return;
+    const { showId, error: parseError } = extractShowId(input);
+    if (parseError) {
+      setError(parseError);
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await fetch('/api/spotify/add-show', {
@@ -31,7 +61,12 @@ export default function ShowImportForm({ onImported }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ showId }),
       });
-      const data = await res.json();
+      let data = null;
+      try {
+        data = await res.json();
+      } catch {
+        data = null;
+      }
       if (!res.ok) throw new Error(data.error || 'Failed to import show');
       setSuccess(`Imported "${data.show?.title}" with ${data.episodesImported} episode(s).`);
       setInput('');

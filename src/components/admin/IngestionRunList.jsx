@@ -37,7 +37,11 @@ export default function IngestionRunList({ runs, loading }) {
             {STATUS_ICON[run.status] ?? <Clock size={14} className="text-muted" />}
             <div>
               <p className="text-sm font-medium text-text-main font-ui">
-                {run.spotify_show_id ? `Show: ${run.spotify_show_id}` : 'All shows'}
+                {run.summary_json?.source === 'saved_episodes'
+                  ? 'Saved Episodes'
+                  : run.spotify_show_id
+                  ? `Show: ${run.spotify_show_id}`
+                  : 'All shows'}
               </p>
               <p className="text-xs text-muted">{formatDate(run.started_at)}</p>
             </div>
