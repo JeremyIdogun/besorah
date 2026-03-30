@@ -108,7 +108,7 @@ export default function SermonDetail() {
                     className="text-sm px-3 py-1 rounded-full text-white font-ui font-medium hover:opacity-80 transition-opacity"
                     style={{ backgroundColor: p.color }}
                   >
-                    {p.icon} {p.name}
+                    {p.icon ? `${p.icon} ${p.name}` : p.name}
                   </Link>
                 ))}
               </div>

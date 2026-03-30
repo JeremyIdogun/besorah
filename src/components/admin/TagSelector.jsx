@@ -43,7 +43,7 @@ export default function TagSelector({
               color: active ? '#fff' : p.color,
             }}
           >
-            {p.icon} {p.name}
+            {p.icon ? `${p.icon} ${p.name}` : p.name}
           </button>
         );
       })}
