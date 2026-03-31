@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { getAdminSermonById, saveAdminSermonReview } from '../../lib/queries';
 import TagSelector from '../../components/admin/TagSelector';
 import { ArrowLeft, Save, Check } from 'lucide-react';
@@ -7,6 +7,7 @@ import { ArrowLeft, Save, Check } from 'lucide-react';
 export default function SermonEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [sermon, setSermon] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -16,6 +17,10 @@ export default function SermonEdit() {
 
   const [form, setForm] = useState({ preacher: '', church: '', description: '' });
   const [selectedPillarIds, setSelectedPillarIds] = useState([]);
+  const prefersApprovedReturn = searchParams.get('returnTo') === 'approved';
+  const isApprovedSermon = sermon?.review_status === 'approved';
+  const backPath = (prefersApprovedReturn || isApprovedSermon) ? '/admin/approved' : '/admin/review';
+  const backLabel = backPath === '/admin/approved' ? 'Approved Sermons' : 'Review Queue';
 
   useEffect(() => {
     getAdminSermonById(id)
@@ -44,7 +49,7 @@ export default function SermonEdit() {
         pillarIds: selectedPillarIds,
       });
       setSaved(true);
-      setTimeout(() => navigate('/admin/review'), 1000);
+      setTimeout(() => navigate(backPath), 1000);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -65,7 +70,7 @@ export default function SermonEdit() {
     return (
       <div className="max-w-3xl mx-auto px-4 py-16 text-center">
         <p className="text-muted font-ui">{error}</p>
-        <Link to="/admin/review" className="text-accent text-sm font-ui hover:text-primary">← Back</Link>
+        <Link to={backPath} className="text-accent text-sm font-ui hover:text-primary">← Back</Link>
       </div>
     );
   }
@@ -74,11 +79,11 @@ export default function SermonEdit() {
     <div className="min-h-screen bg-background">
       <div className="max-w-3xl mx-auto px-4 py-10">
         <Link
-          to="/admin/review"
+          to={backPath}
           className="inline-flex items-center gap-1 text-sm text-muted hover:text-primary font-ui mb-6 transition-colors"
         >
           <ArrowLeft size={14} />
-          Review Queue
+          {backLabel}
         </Link>
 
         <h1
@@ -140,29 +145,42 @@ export default function SermonEdit() {
 
           {/* Actions */}
           <div className="flex flex-wrap gap-3 pt-2">
-            <button
-              onClick={() => handleSave('approved')}
-              disabled={saving}
-              className="flex items-center gap-2 px-5 py-2 bg-primary text-white text-sm font-ui font-medium rounded-lg hover:bg-accent transition-colors disabled:opacity-50"
-            >
-              {saving ? null : <Check size={14} />}
-              Approve
-            </button>
-            <button
-              onClick={() => handleSave('rejected')}
-              disabled={saving}
-              className="flex items-center gap-2 px-5 py-2 bg-red-100 text-red-700 text-sm font-ui font-medium rounded-lg hover:bg-red-200 transition-colors disabled:opacity-50"
-            >
-              Reject
-            </button>
-            <button
-              onClick={() => handleSave('unreviewed')}
-              disabled={saving}
-              className="flex items-center gap-2 px-5 py-2 bg-amber-50 text-muted text-sm font-ui font-medium rounded-lg hover:bg-amber-100 transition-colors disabled:opacity-50"
-            >
-              <Save size={14} />
-              Save & Keep Pending
-            </button>
+            {isApprovedSermon ? (
+              <button
+                onClick={() => handleSave('approved')}
+                disabled={saving}
+                className="flex items-center gap-2 px-5 py-2 bg-primary text-white text-sm font-ui font-medium rounded-lg hover:bg-accent transition-colors disabled:opacity-50"
+              >
+                <Save size={14} />
+                Save Changes
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={() => handleSave('approved')}
+                  disabled={saving}
+                  className="flex items-center gap-2 px-5 py-2 bg-primary text-white text-sm font-ui font-medium rounded-lg hover:bg-accent transition-colors disabled:opacity-50"
+                >
+                  {saving ? null : <Check size={14} />}
+                  Approve
+                </button>
+                <button
+                  onClick={() => handleSave('rejected')}
+                  disabled={saving}
+                  className="flex items-center gap-2 px-5 py-2 bg-red-100 text-red-700 text-sm font-ui font-medium rounded-lg hover:bg-red-200 transition-colors disabled:opacity-50"
+                >
+                  Reject
+                </button>
+                <button
+                  onClick={() => handleSave('unreviewed')}
+                  disabled={saving}
+                  className="flex items-center gap-2 px-5 py-2 bg-amber-50 text-muted text-sm font-ui font-medium rounded-lg hover:bg-amber-100 transition-colors disabled:opacity-50"
+                >
+                  <Save size={14} />
+                  Save & Keep Pending
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>

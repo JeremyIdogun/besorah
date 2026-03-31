@@ -9,6 +9,8 @@ import AdminLogin from './pages/admin/Login';
 import Shows from './pages/admin/Shows';
 import ReviewQueue from './pages/admin/ReviewQueue';
 import SermonEdit from './pages/admin/SermonEdit';
+import ApprovedSermons from './pages/admin/ApprovedSermons';
+import Themes from './pages/admin/Themes';
 import AdminGate from './components/admin/AdminGate';
 
 function PublicLayout({ children }) {
@@ -81,6 +83,22 @@ export default function App() {
           element={
             <AdminGate>
               <ReviewQueue />
+            </AdminGate>
+          }
+        />
+        <Route
+          path="/admin/approved"
+          element={
+            <AdminGate>
+              <ApprovedSermons />
+            </AdminGate>
+          }
+        />
+        <Route
+          path="/admin/themes"
+          element={
+            <AdminGate>
+              <Themes />
             </AdminGate>
           }
         />

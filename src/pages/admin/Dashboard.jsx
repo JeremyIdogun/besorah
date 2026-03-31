@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { getSpotifyShows, getIngestionRuns, getPendingReviewSermons } from '../../lib/queries';
 import AdminStatsPanel from '../../components/admin/AdminStatsPanel';
 import IngestionRunList from '../../components/admin/IngestionRunList';
-import { Settings, ListChecks, Radio } from 'lucide-react';
+import { Check, ListChecks, PlusCircle, Radio } from 'lucide-react';
 
 export default function Dashboard() {
   const [shows, setShows] = useState([]);
@@ -70,7 +70,7 @@ export default function Dashboard() {
 
         {/* Quick links */}
         <section className="mb-10">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <Link
               to="/admin/shows"
               className="flex items-center gap-3 p-5 bg-card-bg rounded-xl shadow-soft border border-amber-50 hover:shadow-card transition-all hover:-translate-y-0.5"
@@ -93,13 +93,27 @@ export default function Dashboard() {
               </div>
             </Link>
 
-            <div className="flex items-center gap-3 p-5 bg-card-bg rounded-xl shadow-soft border border-amber-50 opacity-60">
-              <Settings size={20} className="text-muted" />
+            <Link
+              to="/admin/approved"
+              className="flex items-center gap-3 p-5 bg-card-bg rounded-xl shadow-soft border border-amber-50 hover:shadow-card transition-all hover:-translate-y-0.5"
+            >
+              <Check size={20} className="text-accent" />
               <div>
-                <p className="font-medium text-text-main font-ui">Settings</p>
-                <p className="text-xs text-muted">Phase 2</p>
+                <p className="font-medium text-text-main font-ui">Approved Sermons</p>
+                <p className="text-xs text-muted">Edit tags & metadata</p>
               </div>
-            </div>
+            </Link>
+
+            <Link
+              to="/admin/themes"
+              className="flex items-center gap-3 p-5 bg-card-bg rounded-xl shadow-soft border border-amber-50 hover:shadow-card transition-all hover:-translate-y-0.5"
+            >
+              <PlusCircle size={20} className="text-accent" />
+              <div>
+                <p className="font-medium text-text-main font-ui">Manage Themes</p>
+                <p className="text-xs text-muted">Create new theme</p>
+              </div>
+            </Link>
           </div>
         </section>
 

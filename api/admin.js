@@ -19,11 +19,38 @@ function methodNotAllowed(res) {
   return res.status(405).json({ error: 'Method not allowed' });
 }
 
+function normalizeSlug(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 function getSupabase() {
   if (!supabaseClient) {
     supabaseClient = createSupabaseAdminClient();
   }
   return supabaseClient;
+}
+
+function parsePillarPayload(input) {
+  const name = String(input?.name || '').trim();
+  const requestedSlug = String(input?.slug || '').trim();
+  const slug = normalizeSlug(requestedSlug || name);
+  const description = String(input?.description || '').trim();
+  const icon = String(input?.icon || '').trim() || null;
+  const colorInput = String(input?.color || '').trim();
+  const color = /^#[0-9A-Fa-f]{6}$/.test(colorInput) ? colorInput.toUpperCase() : '#8B4513';
+
+  if (!name) {
+    throw new Error('name is required');
+  }
+  if (!slug) {
+    throw new Error('A valid slug is required');
+  }
+
+  return { name, slug, description, icon, color };
 }
 
 function parseReviewPayload(input) {
@@ -172,20 +199,48 @@ async function handleShows(req, res) {
 }
 
 async function handlePillars(req, res) {
-  if (req.method !== 'GET') return methodNotAllowed(res);
   if (!requireAdminSession(req, res)) return;
   const supabase = getSupabase();
 
-  const { data, error } = await supabase
-    .from('pillars')
-    .select('*')
-    .order('name');
+  if (req.method === 'GET') {
+    const { data, error } = await supabase
+      .from('pillars')
+      .select('*')
+      .order('name');
 
-  if (error) {
-    return res.status(500).json({ error: error.message });
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    return res.status(200).json(data || []);
   }
 
-  return res.status(200).json(data || []);
+  if (req.method === 'POST') {
+    let payload;
+    try {
+      payload = parsePillarPayload(req.body);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Invalid request';
+      return res.status(400).json({ error: message });
+    }
+
+    const { data, error } = await supabase
+      .from('pillars')
+      .insert(payload)
+      .select('*')
+      .single();
+
+    if (error) {
+      if (error.code === '23505') {
+        return res.status(409).json({ error: 'A theme with this name or slug already exists' });
+      }
+      return res.status(500).json({ error: error.message });
+    }
+
+    return res.status(201).json(data);
+  }
+
+  return methodNotAllowed(res);
 }
 
 async function handleIngestionRuns(req, res) {
@@ -219,6 +274,30 @@ async function handlePendingSermons(req, res) {
     .select('*, sermon_pillars(pillar_id, source, confidence_score, pillars(*))')
     .eq('review_status', 'unreviewed')
     .order('created_at', { ascending: false });
+
+  if (error) {
+    return res.status(500).json({ error: error.message });
+  }
+
+  return res.status(200).json(data || []);
+}
+
+async function handleApprovedSermons(req, res) {
+  if (req.method !== 'GET') return methodNotAllowed(res);
+  if (!requireAdminSession(req, res)) return;
+  const supabase = getSupabase();
+
+  const requestedLimit = Number(req.query?.limit);
+  const limit = Number.isFinite(requestedLimit) && requestedLimit > 0
+    ? Math.min(Math.floor(requestedLimit), 500)
+    : 200;
+
+  const { data, error } = await supabase
+    .from('sermons')
+    .select('id, title, preacher, church, created_at, updated_at')
+    .eq('review_status', 'approved')
+    .order('updated_at', { ascending: false })
+    .limit(limit);
 
   if (error) {
     return res.status(500).json({ error: error.message });
@@ -320,6 +399,8 @@ export default async function handler(req, res) {
         return handleIngestionRuns(req, res);
       case 'pending-sermons':
         return handlePendingSermons(req, res);
+      case 'approved-sermons':
+        return handleApprovedSermons(req, res);
       case 'sermon':
         return handleSermon(req, res);
       case 'review-sermon':

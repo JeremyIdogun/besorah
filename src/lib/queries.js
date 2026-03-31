@@ -100,12 +100,30 @@ export async function getAdminPillars() {
   return adminFetch('/api/admin/pillars');
 }
 
+export async function createAdminPillar({ name, slug, description, icon, color }) {
+  return adminFetch('/api/admin/pillars', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name,
+      slug,
+      description,
+      icon,
+      color,
+    }),
+  });
+}
+
 export async function getIngestionRuns(limit = 10) {
   return adminFetch(`/api/admin/ingestion-runs?limit=${encodeURIComponent(limit)}`);
 }
 
 export async function getPendingReviewSermons() {
   return adminFetch('/api/admin/pending-sermons');
+}
+
+export async function getApprovedSermons(limit = 200) {
+  return adminFetch(`/api/admin/approved-sermons?limit=${encodeURIComponent(limit)}`);
 }
 
 export async function getAdminSermonById(id) {
