@@ -28,10 +28,12 @@ const RULES = [
     ],
   },
   {
-    slug: 'healing',
+    slug: 'supernatural-healing',
     keywords: [
       'healing', 'restoration', 'made whole', 'divine healing', 'healed',
       'wholeness', 'restored', 'health', 'sickness', 'disease', 'miracle healing',
+      'miracles', 'signs and wonders', 'power of god', 'supernatural', 'miracle',
+      'wonder', 'sign', 'the miraculous', 'healings and miracles', 'mighty works',
     ],
   },
   {
@@ -57,13 +59,6 @@ const RULES = [
     ],
   },
   {
-    slug: 'supernatural',
-    keywords: [
-      'miracles', 'signs and wonders', 'power of god', 'supernatural', 'miracle',
-      'wonder', 'sign', 'the miraculous', 'healings and miracles', 'mighty works',
-    ],
-  },
-  {
     slug: 'discipleship',
     keywords: [
       'discipleship', 'follow jesus', 'growing in faith', 'disciple', 'following christ',
@@ -86,10 +81,11 @@ const RULES = [
     ],
   },
   {
-    slug: 'worship',
+    slug: 'deliverance',
     keywords: [
-      'worship', 'praise', 'adoration', 'glorify', 'exaltation', 'thanksgiving',
-      'psalms', 'hymns', 'spiritual songs', 'heart of worship', 'worshipper',
+      'deliverance', 'set free', 'freedom from bondage', 'bondage', 'oppression',
+      'spiritual warfare', 'strongholds', 'casting out demons', 'break chains',
+      'demonic', 'liberation', 'freedom in christ',
     ],
   },
 ];

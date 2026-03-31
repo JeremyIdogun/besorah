@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { getPillars, getLatestSermons } from '../../lib/queries';
 import PillarGrid from '../../components/public/PillarGrid';
 import SearchBar from '../../components/public/SearchBar';
@@ -50,6 +51,23 @@ export default function Home() {
       </div>
 
       <div className="max-w-5xl mx-auto px-4 py-12">
+        <section className="mb-10 rounded-2xl border border-amber-100 bg-white/90 p-6 sm:p-8 shadow-soft">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <p
+              className="text-xl sm:text-2xl font-bold"
+              style={{ color: '#8B4513', fontFamily: 'Georgia, serif' }}
+            >
+              New to the faith? Start here.
+            </p>
+            <Link
+              to="/pillar/faith"
+              className="inline-flex items-center justify-center px-5 py-2.5 bg-primary text-white text-sm font-ui font-medium rounded-full hover:bg-accent transition-colors"
+            >
+              Start Here
+            </Link>
+          </div>
+        </section>
+
         {/* Pillars */}
         <section className="mb-14">
           <h2
@@ -59,11 +77,11 @@ export default function Home() {
             Browse by Theme
           </h2>
           <p className="text-muted text-sm font-ui mb-6">
-            Ten pillars of faith — choose a theme to explore sermons.
+            Explore our core themes and choose one to dive into sermons.
           </p>
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-              {Array.from({ length: 10 }).map((_, i) => (
+              {Array.from({ length: 11 }).map((_, i) => (
                 <div key={i} className="h-36 bg-card-bg rounded-2xl animate-pulse" />
               ))}
             </div>
