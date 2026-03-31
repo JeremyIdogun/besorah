@@ -11,7 +11,7 @@ export default function Navbar() {
             className="text-xl font-bold tracking-wide"
             style={{ color: '#8B4513', fontFamily: 'Georgia, serif' }}
           >
-            Euangelion
+            Besorah
           </span>
         </Link>
 

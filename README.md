@@ -1,6 +1,6 @@
-# Euangelion
+# Besorah
 
-Euangelion ingests Spotify podcast episodes into Supabase as sermon records, auto-classifies them into pillars, and exposes an admin UI for review.
+Besorah ingests Spotify podcast episodes into Supabase as sermon records, auto-classifies them into pillars, and exposes an admin UI for review.
 
 ## 1. Environment setup
 
@@ -32,11 +32,11 @@ Notes:
 
 Run the initial migration and seed:
 
-- [`supabase/migrations/001_initial.sql`](/Users/jeremyidogun/Desktop/Projects/euangelion/supabase/migrations/001_initial.sql)
-- [`supabase/migrations/002_spotify_oauth.sql`](/Users/jeremyidogun/Desktop/Projects/euangelion/supabase/migrations/002_spotify_oauth.sql)
-- [`supabase/migrations/003_admin_auth_rls.sql`](/Users/jeremyidogun/Desktop/Projects/euangelion/supabase/migrations/003_admin_auth_rls.sql)
-- [`supabase/migrations/004_seed_thematic_pillars.sql`](/Users/jeremyidogun/Desktop/Projects/euangelion/supabase/migrations/004_seed_thematic_pillars.sql)
-- [`supabase/seed.sql`](/Users/jeremyidogun/Desktop/Projects/euangelion/supabase/seed.sql)
+- [`supabase/migrations/001_initial.sql`](supabase/migrations/001_initial.sql)
+- [`supabase/migrations/002_spotify_oauth.sql`](supabase/migrations/002_spotify_oauth.sql)
+- [`supabase/migrations/003_admin_auth_rls.sql`](supabase/migrations/003_admin_auth_rls.sql)
+- [`supabase/migrations/004_seed_thematic_pillars.sql`](supabase/migrations/004_seed_thematic_pillars.sql)
+- [`supabase/seed.sql`](supabase/seed.sql)
 
 You can run these using Supabase SQL editor or your local Supabase CLI workflow.
 
@@ -87,7 +87,7 @@ Required header:
 Authorization: Bearer <CRON_SECRET>
 ```
 
-Configured in [`vercel.json`](/Users/jeremyidogun/Desktop/Projects/euangelion/vercel.json) at `0 3 * * *`.
+Configured in [`vercel.json`](vercel.json) at `0 3 * * *`.
 
 ### Saved Episodes (OAuth user import)
 
@@ -128,7 +128,7 @@ Authenticate first:
 curl -X POST http://localhost:3000/api/admin/login \
   -H "Content-Type: application/json" \
   -d '{"email":"<ADMIN_EMAIL>","password":"<ADMIN_PASSWORD>"}' \
-  -c /tmp/euangelion-admin-cookie.txt
+  -c /tmp/besorah-admin-cookie.txt
 ```
 
 Add show:
@@ -137,7 +137,7 @@ Add show:
 curl -X POST http://localhost:3000/api/spotify/add-show \
   -H "Content-Type: application/json" \
   -d '{"showId":"<spotify_show_id>"}' \
-  -b /tmp/euangelion-admin-cookie.txt
+  -b /tmp/besorah-admin-cookie.txt
 ```
 
 Sync show:
@@ -146,7 +146,7 @@ Sync show:
 curl -X POST http://localhost:3000/api/spotify/sync \
   -H "Content-Type: application/json" \
   -d '{"showId":"<spotify_show_id>"}' \
-  -b /tmp/euangelion-admin-cookie.txt
+  -b /tmp/besorah-admin-cookie.txt
 ```
 
 Cron sync:
@@ -162,5 +162,5 @@ Import saved episodes:
 curl -X POST http://localhost:3000/api/spotify/import-saved \
   -H "Content-Type: application/json" \
   -d '{}' \
-  -b /tmp/euangelion-admin-cookie.txt
+  -b /tmp/besorah-admin-cookie.txt
 ```

@@ -35,13 +35,13 @@ export default function Home() {
             className="text-4xl md:text-5xl font-bold mb-4 leading-tight"
             style={{ color: '#8B4513', fontFamily: 'Georgia, serif' }}
           >
-            Euangelion
+            Besorah
           </h1>
           <p
             className="text-lg mb-2 font-normal italic"
             style={{ color: '#A0856B', fontFamily: 'Georgia, serif' }}
           >
-            εὐαγγέλιον — Good News, Organised by Theme
+            בְּשׂוֹרָה — Good News, Organised by Theme
           </p>
           <p className="text-base text-muted font-ui mb-8 max-w-md mx-auto">
             Discover Christian sermons curated by theme. Find preaching that speaks to where you are.

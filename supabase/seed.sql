@@ -1,4 +1,4 @@
--- Euangelion — Pillar seed data
+-- Besorah — Pillar seed data
 
 INSERT INTO pillars (name, slug, description, icon, color) VALUES
   ('Faith',          'faith',        'Sermons on trust in God, belief, and spiritual confidence.',                     null, '#356B8C'),

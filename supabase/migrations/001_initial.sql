@@ -1,4 +1,4 @@
--- Euangelion Phase 1 — Initial schema
+-- Besorah Phase 1 — Initial schema
 
 create extension if not exists "pgcrypto";
 
