@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1120" width="1600" height="1120" role="img" aria-labelledby="title desc">
+<title>Besorah primary logo</title>
+<desc>Centered Besorah logo with radiant cross, open book, English wordmark, and Hebrew subtitle.</desc>
+
+<defs>
+  <linearGradient id="goldGrad" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#F4D35E"/>
+    <stop offset="100%" stop-color="#D4A017"/>
+  </linearGradient>
+  <linearGradient id="pageGrad" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#FFFDF7"/>
+    <stop offset="100%" stop-color="#F8E8BE"/>
+  </linearGradient>
+  <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+    <feGaussianBlur stdDeviation="8" result="blur"/>
+    <feMerge>
+      <feMergeNode in="blur"/>
+      <feMergeNode in="SourceGraphic"/>
+    </feMerge>
+  </filter>
+</defs>
+
+<g transform="translate(330 70) scale(1.15)">
+  <g opacity="0.78">
+    <path d="M408 260 L392 45 L424 45 Z" fill="url(#goldGrad)"/>
+    <path d="M408 260 L332 66 L360 72 Z" fill="url(#goldGrad)"/>
+    <path d="M408 260 L266 106 L290 118 Z" fill="url(#goldGrad)"/>
+    <path d="M408 260 L208 166 L232 178 Z" fill="url(#goldGrad)"/>
+    <path d="M408 260 L176 244 L200 250 Z" fill="url(#goldGrad)"/>
+    <path d="M408 260 L640 244 L616 250 Z" fill="url(#goldGrad)"/>
+    <path d="M408 260 L608 166 L584 178 Z" fill="url(#goldGrad)"/>
+    <path d="M408 260 L550 106 L526 118 Z" fill="url(#goldGrad)"/>
+    <path d="M408 260 L484 66 L456 72 Z" fill="url(#goldGrad)"/>
+  </g>
+
+  <g filter="url(#softGlow)">
+    <path d="M380 92 H436 V188 H510 V242 H436 V388 H380 V242 H306 V188 H380 Z"
+          fill="url(#goldGrad)" stroke="#66421E" stroke-width="6"/>
+  </g>
+
+  <g>
+    <path d="M124 362 C188 308, 263 292, 358 326 L408 344 L408 430 L352 410 C264 378, 196 386, 130 436 Z"
+          fill="url(#pageGrad)" stroke="#66421E" stroke-width="6"/>
+    <path d="M692 362 C628 308, 553 292, 458 326 L408 344 L408 430 L464 410 C552 378, 620 386, 686 436 Z"
+          fill="url(#pageGrad)" stroke="#66421E" stroke-width="6"/>
+    <path d="M132 432 C200 392, 266 388, 352 420" fill="none" stroke="#D2B06A" stroke-width="5" stroke-linecap="round"/>
+    <path d="M684 432 C616 392, 550 388, 464 420" fill="none" stroke="#D2B06A" stroke-width="5" stroke-linecap="round"/>
+    <path d="M398 344 Q408 362 418 344 L418 434 Q408 444 398 434 Z" fill="#66421E"/>
+  </g>
+</g>
+
+<g font-family="Georgia, 'Times New Roman', serif" fill="#66421E">
+  <text x="800" y="760" text-anchor="middle" font-size="150" font-weight="700" letter-spacing="1">Besorah</text>
+  <line x1="445" y1="892" x2="570" y2="892" stroke="#D4A017" stroke-width="5"/>
+  <text x="800" y="920" text-anchor="middle" direction="rtl" unicode-bidi="bidi-override" font-size="86">בְּשׂוֹרָה</text>
+  <line x1="1030" y1="892" x2="1155" y2="892" stroke="#D4A017" stroke-width="5"/>
+</g>
+
+</svg>

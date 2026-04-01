@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Cross } from 'lucide-react';
 import { getPillars, getLatestSermons } from '../../lib/queries';
 import PillarGrid from '../../components/public/PillarGrid';
 import SearchBar from '../../components/public/SearchBar';
@@ -34,21 +33,11 @@ export default function Home() {
         }}
       >
         <div className="max-w-2xl mx-auto">
-          <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 text-primary">
-            <Cross size={24} strokeWidth={2.2} aria-hidden="true" />
-          </div>
-          <h1
-            className="text-4xl md:text-5xl font-bold mb-4 leading-tight"
-            style={{ color: '#8B4513', fontFamily: 'Georgia, serif' }}
-          >
-            Besorah
-          </h1>
-          <p
-            className="text-lg mb-2 font-normal italic"
-            style={{ color: '#A0856B', fontFamily: 'Georgia, serif' }}
-          >
-            בְּשׂוֹרָה — Good News, Organised by Theme
-          </p>
+          <img
+            src="/branding/besorah_primary_logo.svg"
+            alt="Besorah — Good News, Organised by Theme"
+            className="w-full max-w-lg mx-auto mb-6"
+          />
           <p className="text-base text-muted font-ui mb-8 max-w-md mx-auto">
             Discover Christian sermons curated by theme. Find preaching that speaks to where you are.
           </p>
