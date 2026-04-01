@@ -27,7 +27,7 @@ export default function Home() {
     <div className="min-h-screen bg-background">
       {/* Hero */}
       <div
-        className="relative py-20 px-4 text-center"
+        className="relative py-14 px-4 text-center"
         style={{
           background: 'linear-gradient(135deg, #FAF6F0 0%, #F5EBE0 50%, #FAF6F0 100%)',
         }}
@@ -36,8 +36,14 @@ export default function Home() {
           <img
             src="/branding/besorah_primary_logo.svg"
             alt="Besorah — Good News, Organised by Theme"
-            className="w-full max-w-lg mx-auto mb-6"
+            className="w-full max-w-[280px] sm:max-w-sm md:max-w-md mx-auto mb-4"
           />
+          <p
+            className="text-lg mb-2 font-normal italic"
+            style={{ color: '#A0856B', fontFamily: 'Georgia, serif' }}
+          >
+            בְּשׂוֹרָה — Good News, Organised by Theme
+          </p>
           <p className="text-base text-muted font-ui mb-8 max-w-md mx-auto">
             Discover Christian sermons curated by theme. Find preaching that speaks to where you are.
           </p>
