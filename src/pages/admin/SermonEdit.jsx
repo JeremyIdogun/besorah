@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { getAdminSermonById, saveAdminSermonReview } from '../../lib/queries';
+import { deleteAdminSermon, getAdminSermonById, saveAdminSermonReview } from '../../lib/queries';
 import TagSelector from '../../components/admin/TagSelector';
-import { ArrowLeft, Save, Check } from 'lucide-react';
+import { ArrowLeft, Save, Check, Trash2 } from 'lucide-react';
 
 export default function SermonEdit() {
   const { id } = useParams();
@@ -12,6 +12,7 @@ export default function SermonEdit() {
   const [sermon, setSermon] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState(null);
 
@@ -55,6 +56,23 @@ export default function SermonEdit() {
       setError(err.message);
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    const title = sermon?.title || 'this sermon';
+    const confirmed = window.confirm(`Delete "${title}" permanently from the app? This cannot be undone.`);
+    if (!confirmed) return;
+
+    setDeleting(true);
+    setError(null);
+    try {
+      await deleteAdminSermon(id);
+      navigate(backPath);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -168,7 +186,7 @@ export default function SermonEdit() {
             {isApprovedSermon ? (
               <button
                 onClick={() => handleSave('approved')}
-                disabled={saving}
+                disabled={saving || deleting}
                 className="flex items-center gap-2 px-5 py-2 bg-primary text-white text-sm font-ui font-medium rounded-lg hover:bg-accent transition-colors disabled:opacity-50"
               >
                 <Save size={14} />
@@ -178,7 +196,7 @@ export default function SermonEdit() {
               <>
                 <button
                   onClick={() => handleSave('approved')}
-                  disabled={saving}
+                  disabled={saving || deleting}
                   className="flex items-center gap-2 px-5 py-2 bg-primary text-white text-sm font-ui font-medium rounded-lg hover:bg-accent transition-colors disabled:opacity-50"
                 >
                   {saving ? null : <Check size={14} />}
@@ -186,14 +204,14 @@ export default function SermonEdit() {
                 </button>
                 <button
                   onClick={() => handleSave('rejected')}
-                  disabled={saving}
+                  disabled={saving || deleting}
                   className="flex items-center gap-2 px-5 py-2 bg-red-100 text-red-700 text-sm font-ui font-medium rounded-lg hover:bg-red-200 transition-colors disabled:opacity-50"
                 >
                   Reject
                 </button>
                 <button
                   onClick={() => handleSave('unreviewed')}
-                  disabled={saving}
+                  disabled={saving || deleting}
                   className="flex items-center gap-2 px-5 py-2 bg-amber-50 text-muted text-sm font-ui font-medium rounded-lg hover:bg-amber-100 transition-colors disabled:opacity-50"
                 >
                   <Save size={14} />
@@ -201,6 +219,14 @@ export default function SermonEdit() {
                 </button>
               </>
             )}
+            <button
+              onClick={handleDelete}
+              disabled={saving || deleting}
+              className="flex items-center gap-2 px-5 py-2 bg-red-50 text-red-700 text-sm font-ui font-medium rounded-lg hover:bg-red-100 transition-colors disabled:opacity-50"
+            >
+              <Trash2 size={14} />
+              {deleting ? 'Deleting...' : 'Delete Sermon'}
+            </button>
           </div>
         </div>
       </div>

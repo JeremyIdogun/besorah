@@ -53,6 +53,22 @@ function parsePillarPayload(input) {
   return { name, slug, description, icon, color };
 }
 
+function parsePillarId(input) {
+  const id = String(input || '').trim();
+  if (!id) {
+    throw new Error('id is required');
+  }
+  return id;
+}
+
+function parseSermonId(input) {
+  const id = String(input || '').trim();
+  if (!id) {
+    throw new Error('id is required');
+  }
+  return id;
+}
+
 function parseReviewPayload(input) {
   const sermonId = String(input?.sermonId || '').trim();
   const reviewStatus = String(input?.reviewStatus || '').trim();
@@ -286,6 +302,71 @@ async function handlePillars(req, res) {
     return res.status(201).json(data);
   }
 
+  if (req.method === 'PATCH') {
+    let id;
+    let payload;
+
+    try {
+      id = parsePillarId(req.body?.id);
+      payload = parsePillarPayload(req.body);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Invalid request';
+      return res.status(400).json({ error: message });
+    }
+
+    const { data, error } = await supabase
+      .from('pillars')
+      .update(payload)
+      .eq('id', id)
+      .select('*')
+      .single();
+
+    if (error) {
+      if (error.code === '23505') {
+        return res.status(409).json({ error: 'A theme with this name or slug already exists' });
+      }
+      return res.status(500).json({ error: error.message });
+    }
+
+    return res.status(200).json(data);
+  }
+
+  if (req.method === 'DELETE') {
+    let id;
+    try {
+      id = parsePillarId(req.query?.id || req.body?.id);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Invalid request';
+      return res.status(400).json({ error: message });
+    }
+
+    const { count, error: countError } = await supabase
+      .from('sermon_pillars')
+      .select('sermon_id', { count: 'exact', head: true })
+      .eq('pillar_id', id);
+
+    if (countError) {
+      return res.status(500).json({ error: countError.message });
+    }
+
+    if ((count ?? 0) > 0) {
+      return res.status(409).json({
+        error: 'This theme is assigned to sermons. Remove or retag those sermons before deleting.',
+      });
+    }
+
+    const { error } = await supabase
+      .from('pillars')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    return res.status(200).json({ ok: true, id });
+  }
+
   return methodNotAllowed(res);
 }
 
@@ -358,26 +439,50 @@ async function handleApprovedSermons(req, res) {
 }
 
 async function handleSermon(req, res) {
-  if (req.method !== 'GET') return methodNotAllowed(res);
   if (!requireAdminSession(req, res)) return;
   const supabase = getSupabase();
 
-  const id = String(req.query?.id || '').trim();
-  if (!id) {
-    return res.status(400).json({ error: 'id is required' });
+  if (req.method === 'GET') {
+    const id = String(req.query?.id || '').trim();
+    if (!id) {
+      return res.status(400).json({ error: 'id is required' });
+    }
+
+    const { data, error } = await supabase
+      .from('sermons')
+      .select('*, sermon_pillars(pillar_id, source, confidence_score, pillars(*))')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    return res.status(200).json(data);
   }
 
-  const { data, error } = await supabase
-    .from('sermons')
-    .select('*, sermon_pillars(pillar_id, source, confidence_score, pillars(*))')
-    .eq('id', id)
-    .single();
+  if (req.method === 'DELETE') {
+    let id;
+    try {
+      id = parseSermonId(req.query?.id || req.body?.id);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Invalid request';
+      return res.status(400).json({ error: message });
+    }
 
-  if (error) {
-    return res.status(500).json({ error: error.message });
+    const { error } = await supabase
+      .from('sermons')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    return res.status(200).json({ ok: true, id });
   }
 
-  return res.status(200).json(data);
+  return methodNotAllowed(res);
 }
 
 async function handleReviewSermon(req, res) {

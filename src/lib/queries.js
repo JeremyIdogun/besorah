@@ -204,6 +204,27 @@ export async function createAdminPillar({ name, slug, description, icon, color }
   });
 }
 
+export async function updateAdminPillar({ id, name, slug, description, icon, color }) {
+  return adminFetch('/api/admin/pillars', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id,
+      name,
+      slug,
+      description,
+      icon,
+      color,
+    }),
+  });
+}
+
+export async function deleteAdminPillar(id) {
+  return adminFetch(`/api/admin/pillars?id=${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  });
+}
+
 export async function getIngestionRuns(limit = 10) {
   return adminFetch(`/api/admin/ingestion-runs?limit=${encodeURIComponent(limit)}`);
 }
@@ -229,6 +250,12 @@ export async function getApprovedSermons({ page = 1, pageSize = 50 } = {}) {
 export async function getAdminSermonById(id) {
   const data = await adminFetch(`/api/admin/sermon?id=${encodeURIComponent(id)}`);
   return withDisplayTitle(data, { preserveSourceTitle: true });
+}
+
+export async function deleteAdminSermon(id) {
+  return adminFetch(`/api/admin/sermon?id=${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  });
 }
 
 export async function getAdminStats() {
