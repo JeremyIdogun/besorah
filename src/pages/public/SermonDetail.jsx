@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getSermonById } from '../../lib/queries';
-import { ExternalLink, ArrowLeft, Calendar, User, Church } from 'lucide-react';
+import { ExternalLink, ChevronRight, Calendar, User, Church } from 'lucide-react';
+import { useMeta } from '../../hooks/useMeta';
 
 function formatDate(d) {
   if (!d) return null;
@@ -13,6 +14,13 @@ export default function SermonDetail() {
   const [sermon, setSermon] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const firstPillar = sermon?.sermon_pillars?.[0]?.pillars ?? null;
+  useMeta({
+    title: sermon?.title,
+    description: sermon?.description?.slice(0, 160) || undefined,
+    image: sermon?.image_url || undefined,
+  });
 
   useEffect(() => {
     getSermonById(id)
@@ -47,13 +55,19 @@ export default function SermonDetail() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-3xl mx-auto px-4 py-10">
-        <Link
-          to="/"
-          className="inline-flex items-center gap-1 text-sm text-muted hover:text-primary font-ui mb-8 transition-colors"
-        >
-          <ArrowLeft size={14} />
-          Back
-        </Link>
+        <nav className="flex items-center gap-1 text-sm font-ui text-muted mb-8 flex-wrap">
+          <Link to="/" className="hover:text-primary transition-colors">Home</Link>
+          {firstPillar && (
+            <>
+              <ChevronRight size={13} className="flex-shrink-0" />
+              <Link to={`/pillar/${firstPillar.slug}`} className="hover:text-primary transition-colors">
+                {firstPillar.name}
+              </Link>
+            </>
+          )}
+          <ChevronRight size={13} className="flex-shrink-0" />
+          <span className="text-text-main line-clamp-1">{sermon.title}</span>
+        </nav>
 
         <div className="bg-card-bg rounded-2xl shadow-card border border-amber-50 overflow-hidden">
           {sermon.image_url && (

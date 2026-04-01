@@ -1,10 +1,10 @@
 import { useEffect, useState, useCallback } from 'react';
-import { getSpotifyShows } from '../../lib/queries';
+import { getSpotifyShows, deleteSpotifyShow } from '../../lib/queries';
 import ShowImportForm from '../../components/admin/ShowImportForm';
 import SyncButton from '../../components/admin/SyncButton';
 import SpotifyLibraryImportCard from '../../components/admin/SpotifyLibraryImportCard';
 import { Link, useLocation } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Trash2 } from 'lucide-react';
 
 function formatDate(d) {
   if (!d) return 'Never';
@@ -14,10 +14,24 @@ function formatDate(d) {
 export default function Shows() {
   const [shows, setShows] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState(null);
   const location = useLocation();
   const query = new URLSearchParams(location.search);
   const spotifyAuth = query.get('spotifyAuth');
   const spotifyAuthReason = query.get('reason');
+
+  async function handleDelete(show) {
+    if (!window.confirm(`Remove "${show.title}"? This won't delete its imported sermons.`)) return;
+    setDeletingId(show.id);
+    try {
+      await deleteSpotifyShow(show.id);
+      load();
+    } catch (err) {
+      alert(err.message || 'Failed to remove show');
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   const load = useCallback(() => {
     setLoading(true);
@@ -108,7 +122,18 @@ export default function Shows() {
                     </span>
                   </div>
                 </div>
-                <SyncButton showId={show.spotify_show_id} onSynced={load} />
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <SyncButton showId={show.spotify_show_id} onSynced={load} />
+                  <button
+                    onClick={() => handleDelete(show)}
+                    disabled={deletingId === show.id}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-red-200 text-xs font-ui text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Remove show"
+                  >
+                    <Trash2 size={13} />
+                    {deletingId === show.id ? 'Removing…' : 'Remove'}
+                  </button>
+                </div>
               </div>
             ))}
           </div>

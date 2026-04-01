@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Search } from 'lucide-react';
+import { ArrowLeft, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getApprovedSermons } from '../../lib/queries';
+
+const PAGE_SIZE = 50;
 
 function formatDate(d) {
   if (!d) return '—';
@@ -10,16 +12,22 @@ function formatDate(d) {
 
 export default function ApprovedSermons() {
   const [sermons, setSermons] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    getApprovedSermons(300)
-      .then(setSermons)
+    setLoading(true);
+    getApprovedSermons({ page, pageSize: PAGE_SIZE })
+      .then(({ sermons: results, total: count }) => {
+        setSermons(results);
+        setTotal(count);
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [page]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -30,6 +38,15 @@ export default function ApprovedSermons() {
         .some((value) => value.toLowerCase().includes(q))
     ));
   }, [sermons, query]);
+
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+  const from = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const to = Math.min(page * PAGE_SIZE, total);
+
+  function goToPage(p) {
+    setPage(p);
+    setQuery('');
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -54,9 +71,11 @@ export default function ApprovedSermons() {
               Edit titles, tags, preacher, and church for already approved sermons.
             </p>
           </div>
-          <p className="text-sm text-muted font-ui">
-            {filtered.length} shown
-          </p>
+          {!loading && total > 0 && (
+            <p className="text-sm text-muted font-ui">
+              {query ? `${filtered.length} match${filtered.length !== 1 ? 'es' : ''} on this page` : `${from}–${to} of ${total}`}
+            </p>
+          )}
         </div>
 
         <div className="relative mb-6">
@@ -65,7 +84,7 @@ export default function ApprovedSermons() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by title, preacher, or church"
+            placeholder="Filter this page by title, preacher, or church"
             className="w-full pl-9 pr-3 py-2 rounded-lg border border-amber-200 bg-white text-sm font-ui focus:outline-none focus:ring-2 focus:ring-accent"
           />
         </div>
@@ -121,6 +140,30 @@ export default function ApprovedSermons() {
             </div>
           )}
         </div>
+
+        {!loading && totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 mt-6">
+            <button
+              onClick={() => goToPage(page - 1)}
+              disabled={page <= 1}
+              className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-amber-200 text-sm font-ui text-muted hover:text-primary hover:border-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <ChevronLeft size={15} />
+              Prev
+            </button>
+            <span className="text-sm font-ui text-muted px-2">
+              Page {page} of {totalPages}
+            </span>
+            <button
+              onClick={() => goToPage(page + 1)}
+              disabled={page >= totalPages}
+              className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-amber-200 text-sm font-ui text-muted hover:text-primary hover:border-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Next
+              <ChevronRight size={15} />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

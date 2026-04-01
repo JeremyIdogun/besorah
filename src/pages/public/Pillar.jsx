@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getPillarBySlug, getSermonsByPillar } from '../../lib/queries';
 import SermonList from '../../components/public/SermonList';
-import { ArrowLeft } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
+import { useMeta } from '../../hooks/useMeta';
 
 export default function Pillar() {
   const { slug } = useParams();
@@ -10,6 +11,13 @@ export default function Pillar() {
   const [sermons, setSermons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  useMeta({
+    title: pillar?.name,
+    description: pillar?.description
+      ? `${pillar.description} Browse ${sermons.length} sermons on ${pillar.name}.`
+      : undefined,
+  });
 
   useEffect(() => {
     setLoading(true);
@@ -44,13 +52,11 @@ export default function Pillar() {
         }}
       >
         <div className="max-w-5xl mx-auto">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-1 text-sm text-muted hover:text-primary font-ui mb-6 transition-colors"
-          >
-            <ArrowLeft size={14} />
-            All Pillars
-          </Link>
+          <nav className="flex items-center gap-1 text-sm font-ui text-muted mb-6">
+            <Link to="/" className="hover:text-primary transition-colors">Home</Link>
+            <ChevronRight size={13} className="flex-shrink-0" />
+            <span className="text-text-main">{pillar?.name ?? 'Pillar'}</span>
+          </nav>
 
           {loading ? (
             <div className="h-10 w-48 bg-amber-100 rounded-lg animate-pulse" />

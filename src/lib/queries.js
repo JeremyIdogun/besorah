@@ -63,17 +63,24 @@ export async function getSermonsByPillar(pillarId) {
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 }
 
-export async function searchSermons(query) {
+export async function searchSermons(query, { page = 1, pageSize = 20 } = {}) {
   const q = `%${query}%`;
-  const { data, error } = await supabase
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+  const { data, error, count } = await supabase
     .from('sermons')
-    .select('*')
+    .select('*', { count: 'exact' })
     .eq('review_status', 'approved')
     .or(`custom_title.ilike.${q},title.ilike.${q},preacher.ilike.${q},church.ilike.${q},description.ilike.${q}`)
     .order('created_at', { ascending: false })
-    .limit(50);
+    .range(from, to);
   if (error) throw error;
-  return (data || []).map((sermon) => withDisplayTitle(sermon));
+  return {
+    sermons: (data || []).map((sermon) => withDisplayTitle(sermon)),
+    total: count ?? 0,
+    page,
+    pageSize,
+  };
 }
 
 export async function getSermonById(id) {
@@ -125,6 +132,14 @@ export async function getSpotifyShows() {
   return adminFetch('/api/admin/shows');
 }
 
+export async function deleteSpotifyShow(id) {
+  return adminFetch('/api/admin/shows', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id }),
+  });
+}
+
 export async function getAdminPillars() {
   return adminFetch('/api/admin/pillars');
 }
@@ -152,9 +167,17 @@ export async function getPendingReviewSermons() {
   return (data || []).map((sermon) => withDisplayTitle(sermon));
 }
 
-export async function getApprovedSermons(limit = 200) {
-  const data = await adminFetch(`/api/admin/approved-sermons?limit=${encodeURIComponent(limit)}`);
-  return (data || []).map((sermon) => withDisplayTitle(sermon));
+export async function getApprovedSermons({ page = 1, pageSize = 50 } = {}) {
+  const offset = (page - 1) * pageSize;
+  const data = await adminFetch(
+    `/api/admin/approved-sermons?limit=${encodeURIComponent(pageSize)}&offset=${encodeURIComponent(offset)}`
+  );
+  return {
+    sermons: (data.sermons || []).map((sermon) => withDisplayTitle(sermon)),
+    total: data.total ?? 0,
+    page,
+    pageSize,
+  };
 }
 
 export async function getAdminSermonById(id) {

@@ -207,20 +207,41 @@ async function handleStats(req, res) {
 }
 
 async function handleShows(req, res) {
-  if (req.method !== 'GET') return methodNotAllowed(res);
   if (!requireAdminSession(req, res)) return;
   const supabase = getSupabase();
 
-  const { data, error } = await supabase
-    .from('spotify_shows')
-    .select('*')
-    .order('created_at', { ascending: false });
+  if (req.method === 'GET') {
+    const { data, error } = await supabase
+      .from('spotify_shows')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-  if (error) {
-    return res.status(500).json({ error: error.message });
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    return res.status(200).json(data || []);
   }
 
-  return res.status(200).json(data || []);
+  if (req.method === 'DELETE') {
+    const id = String(req.body?.id || '').trim();
+    if (!id) {
+      return res.status(400).json({ error: 'id is required' });
+    }
+
+    const { error } = await supabase
+      .from('spotify_shows')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    return res.status(200).json({ ok: true });
+  }
+
+  return methodNotAllowed(res);
 }
 
 async function handlePillars(req, res) {
@@ -314,21 +335,26 @@ async function handleApprovedSermons(req, res) {
 
   const requestedLimit = Number(req.query?.limit);
   const limit = Number.isFinite(requestedLimit) && requestedLimit > 0
-    ? Math.min(Math.floor(requestedLimit), 500)
-    : 200;
+    ? Math.min(Math.floor(requestedLimit), 100)
+    : 50;
 
-  const { data, error } = await supabase
+  const requestedOffset = Number(req.query?.offset);
+  const offset = Number.isFinite(requestedOffset) && requestedOffset >= 0
+    ? Math.floor(requestedOffset)
+    : 0;
+
+  const { data, error, count } = await supabase
     .from('sermons')
-    .select('id, title, custom_title, preacher, church, created_at, updated_at')
+    .select('id, title, custom_title, preacher, church, created_at, updated_at', { count: 'exact' })
     .eq('review_status', 'approved')
     .order('updated_at', { ascending: false })
-    .limit(limit);
+    .range(offset, offset + limit - 1);
 
   if (error) {
     return res.status(500).json({ error: error.message });
   }
 
-  return res.status(200).json(data || []);
+  return res.status(200).json({ sermons: data || [], total: count ?? 0 });
 }
 
 async function handleSermon(req, res) {

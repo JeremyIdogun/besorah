@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import Navbar from './components/public/Navbar';
 import Home from './pages/public/Home';
 import Pillar from './pages/public/Pillar';
@@ -12,6 +13,7 @@ import SermonEdit from './pages/admin/SermonEdit';
 import ApprovedSermons from './pages/admin/ApprovedSermons';
 import Themes from './pages/admin/Themes';
 import AdminGate from './components/admin/AdminGate';
+import NotFound from './pages/NotFound';
 
 function PublicLayout({ children }) {
   return (
@@ -110,7 +112,16 @@ export default function App() {
             </AdminGate>
           }
         />
+        <Route
+          path="*"
+          element={
+            <PublicLayout>
+              <NotFound />
+            </PublicLayout>
+          }
+        />
       </Routes>
+      <Analytics />
     </BrowserRouter>
   );
 }

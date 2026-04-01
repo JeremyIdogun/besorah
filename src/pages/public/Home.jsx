@@ -5,8 +5,10 @@ import { getPillars, getLatestSermons } from '../../lib/queries';
 import PillarGrid from '../../components/public/PillarGrid';
 import SearchBar from '../../components/public/SearchBar';
 import SermonList from '../../components/public/SermonList';
+import { useMeta } from '../../hooks/useMeta';
 
 export default function Home() {
+  useMeta({});
   const [pillars, setPillars] = useState([]);
   const [latest, setLatest] = useState([]);
   const [loading, setLoading] = useState(true);
