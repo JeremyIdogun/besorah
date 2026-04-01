@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Search, ChevronLeft, ChevronRight } from 'lucide-react';
-import { getApprovedSermons } from '../../lib/queries';
+import { ArrowLeft, Search, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
+import { deleteAdminSermon, getApprovedSermons } from '../../lib/queries';
 
 const PAGE_SIZE = 50;
 
@@ -16,10 +16,13 @@ export default function ApprovedSermons() {
   const [page, setPage] = useState(1);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState(null);
   const [error, setError] = useState(null);
+  const [notice, setNotice] = useState(null);
 
   useEffect(() => {
     setLoading(true);
+    setError(null);
     getApprovedSermons({ page, pageSize: PAGE_SIZE })
       .then(({ sermons: results, total: count }) => {
         setSermons(results);
@@ -28,6 +31,28 @@ export default function ApprovedSermons() {
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [page]);
+
+  async function handleDelete(sermon) {
+    const confirmed = window.confirm(`Delete "${sermon.title}" permanently from the app? This cannot be undone.`);
+    if (!confirmed) return;
+
+    setDeletingId(sermon.id);
+    setError(null);
+    setNotice(null);
+    try {
+      await deleteAdminSermon(sermon.id);
+      setSermons((prev) => prev.filter((s) => s.id !== sermon.id));
+      setTotal((prev) => Math.max(0, prev - 1));
+      if (sermons.length === 1 && page > 1) {
+        setPage((prev) => Math.max(1, prev - 1));
+      }
+      setNotice('Sermon deleted.');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -92,6 +117,9 @@ export default function ApprovedSermons() {
         {error && (
           <p className="text-sm text-red-600 font-ui mb-4">{error}</p>
         )}
+        {notice && (
+          <p className="text-sm text-green-700 font-ui mb-4">{notice}</p>
+        )}
 
         <div className="bg-card-bg rounded-2xl p-4 sm:p-6 shadow-soft border border-amber-50">
           {loading ? (
@@ -126,12 +154,23 @@ export default function ApprovedSermons() {
                       <td className="py-3 pr-4 hidden md:table-cell text-muted">{sermon.church || '—'}</td>
                       <td className="py-3 pr-4 hidden lg:table-cell text-muted">{formatDate(sermon.updated_at || sermon.created_at)}</td>
                       <td className="py-3">
-                        <Link
-                          to={`/admin/sermons/${sermon.id}?returnTo=approved`}
-                          className="inline-flex items-center gap-1 text-xs text-accent hover:text-primary font-medium transition-colors"
-                        >
-                          Edit Sermon
-                        </Link>
+                        <div className="flex items-center gap-2">
+                          <Link
+                            to={`/admin/sermons/${sermon.id}?returnTo=approved`}
+                            className="inline-flex items-center gap-1 text-xs text-accent hover:text-primary font-medium transition-colors"
+                          >
+                            Edit Sermon
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(sermon)}
+                            disabled={deletingId === sermon.id}
+                            className="inline-flex items-center gap-1 px-2 py-1 text-xs font-ui font-medium rounded-md bg-red-50 text-red-700 hover:bg-red-100 transition-colors disabled:opacity-50"
+                          >
+                            <Trash2 size={12} />
+                            {deletingId === sermon.id ? 'Deleting...' : 'Delete'}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

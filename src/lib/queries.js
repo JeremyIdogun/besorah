@@ -113,16 +113,34 @@ async function adminFetch(path, options = {}) {
     ...options,
   });
 
+  let raw = '';
+  try {
+    raw = await res.text();
+  } catch {
+    raw = '';
+  }
+
   let data = null;
   try {
-    data = await res.json();
+    data = raw ? JSON.parse(raw) : null;
   } catch {
     data = null;
   }
 
   if (!res.ok) {
-    const fallback = res.status === 401 ? 'Admin login required' : 'Admin request failed';
-    throw new Error(data?.error || fallback);
+    if (data?.error) {
+      throw new Error(data.error);
+    }
+
+    if (raw && !raw.trim().startsWith('<')) {
+      throw new Error(raw.trim().slice(0, 240));
+    }
+
+    const fallback =
+      res.status === 401
+        ? 'Admin login required'
+        : `Admin request failed (${res.status}${res.statusText ? ` ${res.statusText}` : ''})`;
+    throw new Error(fallback);
   }
 
   return data;
@@ -134,6 +152,34 @@ export async function getSpotifyShows() {
 
 export async function deleteSpotifyShow(id) {
   return adminFetch('/api/admin/shows', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id }),
+  });
+}
+
+export async function getYouTubePlaylists() {
+  return adminFetch('/api/youtube?action=playlists');
+}
+
+export async function importYouTubePlaylist(playlistId) {
+  return adminFetch('/api/youtube?action=import-playlist', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ playlistId }),
+  });
+}
+
+export async function syncYouTubePlaylist(playlistId) {
+  return adminFetch('/api/youtube?action=sync-playlist', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ playlistId }),
+  });
+}
+
+export async function deleteYouTubePlaylist(id) {
+  return adminFetch('/api/youtube?action=playlists', {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ id }),
@@ -155,6 +201,27 @@ export async function createAdminPillar({ name, slug, description, icon, color }
       icon,
       color,
     }),
+  });
+}
+
+export async function updateAdminPillar({ id, name, slug, description, icon, color }) {
+  return adminFetch('/api/admin/pillars', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id,
+      name,
+      slug,
+      description,
+      icon,
+      color,
+    }),
+  });
+}
+
+export async function deleteAdminPillar(id) {
+  return adminFetch(`/api/admin/pillars?id=${encodeURIComponent(id)}`, {
+    method: 'DELETE',
   });
 }
 
@@ -183,6 +250,12 @@ export async function getApprovedSermons({ page = 1, pageSize = 50 } = {}) {
 export async function getAdminSermonById(id) {
   const data = await adminFetch(`/api/admin/sermon?id=${encodeURIComponent(id)}`);
   return withDisplayTitle(data, { preserveSourceTitle: true });
+}
+
+export async function deleteAdminSermon(id) {
+  return adminFetch(`/api/admin/sermon?id=${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  });
 }
 
 export async function getAdminStats() {

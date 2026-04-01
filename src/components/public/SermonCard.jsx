@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ExternalLink, Calendar, User, Church } from 'lucide-react';
+import { ExternalLink, Calendar, User, Church, Video, Headphones } from 'lucide-react';
 
 function formatDate(dateStr) {
   if (!dateStr) return null;
@@ -12,6 +12,17 @@ function formatDate(dateStr) {
 
 export default function SermonCard({ sermon, pillars = [] }) {
   const { id, title, preacher, church, date_preached, image_url, external_url } = sermon;
+  const platform = (sermon.platform || '').toLowerCase();
+  const externalCtaLabel = platform === 'youtube'
+    ? 'Watch on YouTube'
+    : platform === 'spotify'
+      ? 'Listen on Spotify'
+      : 'Open Source';
+  const CtaIcon = platform === 'youtube'
+    ? Video
+    : platform === 'spotify'
+      ? Headphones
+      : ExternalLink;
 
   return (
     <div className="bg-card-bg rounded-2xl overflow-hidden shadow-soft hover:shadow-card transition-all duration-200 hover:-translate-y-0.5 border border-amber-50">
@@ -73,8 +84,8 @@ export default function SermonCard({ sermon, pillars = [] }) {
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 text-xs text-accent hover:text-primary font-ui font-medium transition-colors"
           >
-            <span>Listen on Spotify</span>
-            <ExternalLink size={11} />
+            <span>{externalCtaLabel}</span>
+            <CtaIcon size={11} />
           </a>
         )}
       </div>

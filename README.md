@@ -1,6 +1,6 @@
 # Besorah
 
-Besorah ingests Spotify podcast episodes into Supabase as sermon records, auto-classifies them into pillars, and exposes an admin UI for review.
+Besorah ingests Spotify podcast episodes and YouTube playlist videos into Supabase as sermon records, auto-classifies them into pillars, and exposes an admin UI for review.
 
 ## 1. Environment setup
 
@@ -14,6 +14,7 @@ SPOTIFY_CLIENT_ID=
 SPOTIFY_CLIENT_SECRET=
 SPOTIFY_MARKET=US
 SPOTIFY_REDIRECT_URI=https://your-domain.com/api/spotify/auth/callback
+YOUTUBE_API_KEY=
 ADMIN_EMAIL=
 ADMIN_PASSWORD=
 ADMIN_SESSION_SECRET=
@@ -24,6 +25,7 @@ Notes:
 - `SPOTIFY_CLIENT_ID` + `SPOTIFY_CLIENT_SECRET` are used for Spotify client credentials flow (server-side only).
 - `SPOTIFY_MARKET` controls episode availability lookup (`US` default).
 - `SPOTIFY_REDIRECT_URI` must match the Redirect URI configured in your Spotify app dashboard.
+- `YOUTUBE_API_KEY` is used for YouTube unlisted playlist ingestion (server-side only).
 - `SUPABASE_SERVICE_ROLE_KEY` is required by API routes that write ingestion data.
 - `ADMIN_EMAIL` + `ADMIN_PASSWORD` are used by `/api/admin/login`.
 - `ADMIN_SESSION_SECRET` signs the HttpOnly admin session cookie.
@@ -38,6 +40,8 @@ Run the initial migration and seed:
 - [`supabase/migrations/004_seed_thematic_pillars.sql`](supabase/migrations/004_seed_thematic_pillars.sql)
 - [`supabase/migrations/005_refresh_thematic_pillars.sql`](supabase/migrations/005_refresh_thematic_pillars.sql)
 - [`supabase/migrations/006_sermon_custom_title.sql`](supabase/migrations/006_sermon_custom_title.sql)
+- [`supabase/migrations/007_youtube_ingestion.sql`](supabase/migrations/007_youtube_ingestion.sql)
+- [`supabase/migrations/008_fix_youtube_upsert_indexes.sql`](supabase/migrations/008_fix_youtube_upsert_indexes.sql)
 - [`supabase/seed.sql`](supabase/seed.sql)
 
 You can run these using Supabase SQL editor or your local Supabase CLI workflow.
@@ -100,6 +104,23 @@ Configured in [`vercel.json`](vercel.json) at `0 3 * * *`.
 
 This imports episodes from Spotify `GET /me/episodes` into `sermons` and `spotify_shows`.
 
+### YouTube unlisted playlist import
+
+`POST /api/youtube/import-playlist`
+
+Body:
+
+```json
+{ "playlistId": "https://www.youtube.com/playlist?list=..." }
+```
+
+What it does:
+- Reads playlist metadata and video IDs from YouTube Data API
+- Upserts `youtube_playlists`
+- Upserts `sermons` by `youtube_video_id`
+- Adds automatic pillar suggestions into `sermon_pillars`
+- Logs status in `ingestion_runs`
+
 ## 4. Local run
 
 ```bash
@@ -117,8 +138,8 @@ npx vercel dev
 
 Then in admin (via Vercel dev URL):
 - `/admin/login` to sign in
-- `/admin/shows` to add a Spotify show
-- Click `Sync` to pull latest episodes
+- `/admin/shows` to add Spotify shows and YouTube unlisted playlists
+- Click `Sync` to pull latest episodes/videos
 - `/admin/review` to approve/edit pillar tags
 
 ## 5. Manual endpoint tests
@@ -164,5 +185,14 @@ Import saved episodes:
 curl -X POST http://localhost:3000/api/spotify/import-saved \
   -H "Content-Type: application/json" \
   -d '{}' \
+  -b /tmp/besorah-admin-cookie.txt
+```
+
+Import YouTube playlist:
+
+```bash
+curl -X POST http://localhost:3000/api/youtube/import-playlist \
+  -H "Content-Type: application/json" \
+  -d '{"playlistId":"https://www.youtube.com/playlist?list=<PLAYLIST_ID>"}' \
   -b /tmp/besorah-admin-cookie.txt
 ```

@@ -39,6 +39,8 @@ export default function IngestionRunList({ runs, loading }) {
               <p className="text-sm font-medium text-text-main font-ui">
                 {run.summary_json?.source === 'saved_episodes'
                   ? 'Saved Episodes'
+                  : run.summary_json?.source === 'youtube_playlist'
+                  ? `YouTube: ${run.summary_json.playlistTitle || run.summary_json.playlistId || 'Playlist'}`
                   : run.spotify_show_id
                   ? `Show: ${run.spotify_show_id}`
                   : 'All shows'}

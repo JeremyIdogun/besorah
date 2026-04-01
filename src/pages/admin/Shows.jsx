@@ -3,6 +3,7 @@ import { getSpotifyShows, deleteSpotifyShow } from '../../lib/queries';
 import ShowImportForm from '../../components/admin/ShowImportForm';
 import SyncButton from '../../components/admin/SyncButton';
 import SpotifyLibraryImportCard from '../../components/admin/SpotifyLibraryImportCard';
+import YouTubePlaylistImportCard from '../../components/admin/YouTubePlaylistImportCard';
 import { Link, useLocation } from 'react-router-dom';
 import { ArrowLeft, Trash2 } from 'lucide-react';
 
@@ -58,14 +59,14 @@ export default function Shows() {
           className="text-3xl font-bold mb-2"
           style={{ color: '#8B4513', fontFamily: 'Georgia, serif' }}
         >
-          Spotify Shows
+          Content Sources
         </h1>
         <p className="text-sm text-muted font-ui mb-8">
-          Add and manage Spotify podcast shows to import sermons from.
+          Add and manage Spotify shows and YouTube playlists to import sermons from.
         </p>
 
         <div className="bg-card-bg rounded-2xl p-6 shadow-soft border border-amber-50 mb-8">
-          <h2 className="text-base font-bold text-text-main font-ui mb-4">Add New Show</h2>
+          <h2 className="text-base font-bold text-text-main font-ui mb-4">Add New Spotify Show</h2>
           <ShowImportForm onImported={load} />
         </div>
 
@@ -75,11 +76,13 @@ export default function Shows() {
           onImported={load}
         />
 
+        <YouTubePlaylistImportCard onImported={load} />
+
         <h2
           className="text-lg font-bold mb-4"
           style={{ color: '#8B4513', fontFamily: 'Georgia, serif' }}
         >
-          Tracked Shows
+          Tracked Spotify Shows
         </h2>
 
         {loading ? (

@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
+  deleteAdminSermon,
   getAdminPillars,
   getPendingReviewSermons,
   saveAdminSermonReview,
@@ -183,6 +184,38 @@ export default function ReviewQueue() {
     }
   }
 
+  async function deleteOne(sermonId) {
+    const sermon = sermons.find((row) => row.id === sermonId);
+    if (!sermon) return;
+
+    const confirmed = window.confirm(`Delete "${sermon.title}" permanently from the app? This cannot be undone.`);
+    if (!confirmed) return;
+
+    setSavingBySermonId((prev) => ({ ...prev, [sermonId]: true }));
+    setError(null);
+    setNotice(null);
+
+    try {
+      await deleteAdminSermon(sermonId);
+      setSermons((prev) => prev.filter((row) => row.id !== sermonId));
+      setSelectedSermonIds((prev) => prev.filter((id) => id !== sermonId));
+      setDraftPillarIdsBySermonId((prev) => {
+        const next = { ...prev };
+        delete next[sermonId];
+        return next;
+      });
+      setNotice('Sermon deleted.');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSavingBySermonId((prev) => {
+        const next = { ...prev };
+        delete next[sermonId];
+        return next;
+      });
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-5xl mx-auto px-4 py-10">
@@ -228,6 +261,7 @@ export default function ReviewQueue() {
             onUpdateDraftPillarIds={updateDraftPillarIds}
             onReviewOne={reviewOne}
             onReviewBulk={reviewBulk}
+            onDeleteOne={deleteOne}
           />
         </div>
 

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Check, Eye, PencilLine, X } from 'lucide-react';
+import { Check, Eye, PencilLine, Trash2, X } from 'lucide-react';
 import TagSelector from './TagSelector';
 
 function formatDate(d) {
@@ -21,6 +21,7 @@ export default function ReviewQueueTable({
   onUpdateDraftPillarIds,
   onReviewOne,
   onReviewBulk,
+  onDeleteOne,
 }) {
   const [expandedEditorBySermonId, setExpandedEditorBySermonId] = useState({});
   const selectedSet = useMemo(() => new Set(selectedSermonIds), [selectedSermonIds]);
@@ -189,6 +190,15 @@ export default function ReviewQueueTable({
                       <Eye size={12} />
                       Full Review
                     </Link>
+                    <button
+                      type="button"
+                      onClick={() => onDeleteOne(sermon.id)}
+                      disabled={isSaving}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-red-50 text-red-700 text-xs font-ui font-medium hover:bg-red-100 transition-colors disabled:opacity-50"
+                    >
+                      <Trash2 size={12} />
+                      Delete
+                    </button>
                   </div>
                 </td>
               </tr>
