@@ -234,6 +234,14 @@ export default function ReviewQueue() {
         {!loading && totalPages > 1 && (
           <div className="flex items-center justify-center gap-2 mt-6">
             <button
+              onClick={() => setPage(1)}
+              disabled={currentPage <= 1}
+              className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-amber-200 text-sm font-ui text-muted hover:text-primary hover:border-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <ChevronLeft size={15} />
+              <ChevronLeft size={15} className="-ml-2" />
+            </button>
+            <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={currentPage <= 1}
               className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-amber-200 text-sm font-ui text-muted hover:text-primary hover:border-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
@@ -251,6 +259,14 @@ export default function ReviewQueue() {
             >
               Next
               <ChevronRight size={15} />
+            </button>
+            <button
+              onClick={() => setPage(totalPages)}
+              disabled={currentPage >= totalPages}
+              className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-amber-200 text-sm font-ui text-muted hover:text-primary hover:border-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <ChevronRight size={15} />
+              <ChevronRight size={15} className="-ml-2" />
             </button>
           </div>
         )}

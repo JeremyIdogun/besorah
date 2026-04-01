@@ -87,6 +87,14 @@ export default function Search() {
         {!loading && totalPages > 1 && (
           <div className="flex items-center justify-center gap-2 mt-10">
             <button
+              onClick={() => goToPage(1)}
+              disabled={page <= 1}
+              className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-amber-200 text-sm font-ui text-muted hover:text-primary hover:border-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <ChevronLeft size={15} />
+              <ChevronLeft size={15} className="-ml-2" />
+            </button>
+            <button
               onClick={() => goToPage(page - 1)}
               disabled={page <= 1}
               className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-amber-200 text-sm font-ui text-muted hover:text-primary hover:border-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
@@ -104,6 +112,14 @@ export default function Search() {
             >
               Next
               <ChevronRight size={15} />
+            </button>
+            <button
+              onClick={() => goToPage(totalPages)}
+              disabled={page >= totalPages}
+              className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-amber-200 text-sm font-ui text-muted hover:text-primary hover:border-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <ChevronRight size={15} />
+              <ChevronRight size={15} className="-ml-2" />
             </button>
           </div>
         )}
