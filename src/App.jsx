@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import Navbar from './components/public/Navbar';
 import Home from './pages/public/Home';
 import Pillar from './pages/public/Pillar';
@@ -120,6 +121,7 @@ export default function App() {
           }
         />
       </Routes>
+      <Analytics />
     </BrowserRouter>
   );
 }
