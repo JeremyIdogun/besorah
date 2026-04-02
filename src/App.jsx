@@ -16,6 +16,7 @@ import ApprovedSermons from './pages/admin/ApprovedSermons';
 import Themes from './pages/admin/Themes';
 import AdminGate from './components/admin/AdminGate';
 import NotFound from './pages/NotFound';
+import ScrollToTop from './components/ScrollToTop';
 
 function PublicLayout({ children }) {
   return (
@@ -30,6 +31,7 @@ function PublicLayout({ children }) {
 export default function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         {/* Public routes */}
         <Route

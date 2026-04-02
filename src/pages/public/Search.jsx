@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, Link, useLocation } from 'react-router-dom';
 import { Search as SearchIcon, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
-import { searchSermons } from '../../lib/queries';
+import { searchSermons, getPillars } from '../../lib/queries';
 import SearchBar from '../../components/public/SearchBar';
 import SermonList from '../../components/public/SermonList';
 import { useMeta } from '../../hooks/useMeta';
@@ -18,7 +18,12 @@ export default function Search() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [error, setError] = useState(null);
+  const [pillars, setPillars] = useState([]);
   const { pathname, search } = useLocation();
+
+  useEffect(() => {
+    getPillars().then(setPillars).catch(() => {});
+  }, []);
 
   useMeta({
     title: q ? `Search: ${q}` : 'Search Sermons',
@@ -112,7 +117,24 @@ export default function Search() {
             <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 text-primary">
               <SearchIcon size={22} strokeWidth={2.2} aria-hidden="true" />
             </div>
-            <p>Enter a search term above to find sermons.</p>
+            <p className="mb-6">Enter a search term above to find sermons.</p>
+            {pillars.length > 0 && (
+              <div>
+                <p className="text-xs text-muted/70 mb-3">Or browse by theme</p>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {pillars.map((p) => (
+                    <Link
+                      key={p.id}
+                      to={`/pillar/${p.slug}`}
+                      className="text-xs px-3 py-1.5 rounded-full text-white font-ui font-medium hover:opacity-80 transition-opacity"
+                      style={{ backgroundColor: p.color }}
+                    >
+                      {p.icon ? `${p.icon} ${p.name}` : p.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
