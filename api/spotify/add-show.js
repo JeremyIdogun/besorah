@@ -57,12 +57,30 @@ export default async function handler(req, res) {
 
     const episodes = await fetchAllSpotifyShowEpisodes(token, showId);
     let episodesImported = 0;
+    let skippedExistingEpisodes = 0;
+    let failedEpisodes = 0;
 
     // Fetch all pillars for slug→id mapping
     const { data: pillars } = await supabase.from('pillars').select('id, slug');
     const pillarBySlug = Object.fromEntries(pillars.map((p) => [p.slug, p.id]));
 
     for (const ep of episodes) {
+      const { data: existing, error: existingError } = await supabase
+        .from('sermons')
+        .select('id')
+        .eq('spotify_episode_id', ep.id)
+        .maybeSingle();
+
+      if (existingError) {
+        failedEpisodes++;
+        continue;
+      }
+
+      if (existing) {
+        skippedExistingEpisodes++;
+        continue;
+      }
+
       const releaseDate = ep.release_date
         ? new Date(ep.release_date).toISOString().split('T')[0]
         : null;
@@ -84,11 +102,18 @@ export default async function handler(req, res) {
 
       const { data: sermon, error: sermonError } = await supabase
         .from('sermons')
-        .upsert(sermonPayload, { onConflict: 'spotify_episode_id' })
+        .insert(sermonPayload)
         .select()
         .single();
 
-      if (sermonError) continue;
+      if (sermonError) {
+        if (sermonError.code === '23505') {
+          skippedExistingEpisodes++;
+        } else {
+          failedEpisodes++;
+        }
+        continue;
+      }
       episodesImported++;
 
       // Run classifier
@@ -123,13 +148,20 @@ export default async function handler(req, res) {
       .update({
         status: 'completed',
         completed_at: new Date().toISOString(),
-        summary_json: { new: episodesImported, updated: 0 },
+        summary_json: {
+          new: episodesImported,
+          updated: 0,
+          skipped_existing: skippedExistingEpisodes,
+          failed: failedEpisodes,
+        },
       })
       .eq('id', runId);
 
     return res.status(200).json({
       show: { title: show.name },
       episodesImported,
+      skippedExistingEpisodes,
+      failedEpisodes,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unexpected server error';

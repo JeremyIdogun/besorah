@@ -51,7 +51,11 @@ export default function IngestionRunList({ runs, loading }) {
           <div className="text-right">
             {run.summary_json && (
               <p className="text-xs text-muted font-ui">
-                {run.summary_json.new ?? 0} new · {run.summary_json.updated ?? 0} updated
+                {run.summary_json.new ?? 0} new
+                {' · '}
+                {run.summary_json.skipped_existing ?? 0} skipped existing
+                {' · '}
+                {run.summary_json.failed ?? 0} failed
               </p>
             )}
             <span

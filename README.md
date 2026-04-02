@@ -62,7 +62,7 @@ What it does:
 - Fetches show metadata from Spotify
 - Upserts `spotify_shows`
 - Fetches all show episodes
-- Upserts `sermons` by `spotify_episode_id`
+- Inserts only new `sermons` by `spotify_episode_id` (skips existing)
 - Adds automatic pillar suggestions into `sermon_pillars`
 - Logs status in `ingestion_runs`
 
@@ -79,7 +79,7 @@ Body:
 What it does:
 - Pulls latest show episodes
 - Inserts new episodes
-- Updates existing episodes
+- Skips already ingested episodes
 - Updates `spotify_shows.last_synced_at`
 - Logs summary in `ingestion_runs`
 
@@ -117,7 +117,7 @@ Body:
 What it does:
 - Reads playlist metadata and video IDs from YouTube Data API
 - Upserts `youtube_playlists`
-- Upserts `sermons` by `youtube_video_id`
+- Inserts only new `sermons` by `youtube_video_id` (skips existing)
 - Adds automatic pillar suggestions into `sermon_pillars`
 - Logs status in `ingestion_runs`
 

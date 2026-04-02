@@ -76,7 +76,7 @@ export default function SpotifyLibraryImportCard({ authState, authReason, onImpo
         throw new Error(data?.error || raw || `Failed to import saved episodes (${res.status})`);
       }
       setResult(
-        `Imported saved episodes: ${data.newEpisodes} new, ${data.updatedEpisodes} updated, ${data.skippedEpisodes} skipped.`,
+        `Imported saved episodes: ${data.newEpisodes} new, ${data.skippedExistingEpisodes ?? 0} skipped existing, ${data.skippedEpisodes ?? 0} skipped, ${data.failedEpisodes ?? 0} failed.`,
       );
       onImported?.();
     } catch (err) {

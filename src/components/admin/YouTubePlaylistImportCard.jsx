@@ -47,7 +47,7 @@ export default function YouTubePlaylistImportCard({ onImported }) {
     setSubmitting(true);
     try {
       const result = await importYouTubePlaylist(input.trim());
-      const details = `${result.newEpisodes} new, ${result.updatedEpisodes} updated, ${result.skippedEpisodes} skipped, ${result.failedEpisodes ?? 0} failed.`;
+      const details = `${result.newEpisodes} new, ${result.skippedExistingEpisodes ?? 0} skipped existing, ${result.skippedEpisodes} skipped, ${result.failedEpisodes ?? 0} failed.`;
       setSuccess(
         `Imported "${result.playlist?.title}". ${details} Review queue contains newly imported unreviewed sermons.`,
       );
@@ -67,7 +67,7 @@ export default function YouTubePlaylistImportCard({ onImported }) {
     setSyncingPlaylistId(playlistId);
     try {
       const result = await syncYouTubePlaylist(playlistId);
-      const details = `${result.newEpisodes} new, ${result.updatedEpisodes} updated, ${result.skippedEpisodes} skipped, ${result.failedEpisodes ?? 0} failed.`;
+      const details = `${result.newEpisodes} new, ${result.skippedExistingEpisodes ?? 0} skipped existing, ${result.skippedEpisodes} skipped, ${result.failedEpisodes ?? 0} failed.`;
       setSuccess(
         `Synced "${result.playlist?.title}". ${details}`,
       );
