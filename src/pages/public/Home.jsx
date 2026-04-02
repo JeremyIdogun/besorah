@@ -16,17 +16,27 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  function fetchData() {
+  async function fetchData() {
     setLoading(true);
     setError(null);
-    Promise.all([getPillars(), getLatestSermons(6), getPopularSermons(3)])
-      .then(([p, s, pop]) => {
-        setPillars(p);
-        setLatest(s);
-        setPopular(pop);
-      })
-      .catch(() => setError('Unable to load content. Please try again.'))
-      .finally(() => setLoading(false));
+    const [pillarsResult, latestResult, popularResult] = await Promise.allSettled([
+      getPillars(),
+      getLatestSermons(6),
+      getPopularSermons(3),
+    ]);
+
+    const pillarsOk = pillarsResult.status === 'fulfilled';
+    const latestOk = latestResult.status === 'fulfilled';
+
+    setPillars(pillarsOk ? pillarsResult.value : []);
+    setLatest(latestOk ? latestResult.value : []);
+    setPopular(popularResult.status === 'fulfilled' ? popularResult.value : []);
+
+    if (!pillarsOk || !latestOk) {
+      setError('Some content could not load. Please try again.');
+    }
+
+    setLoading(false);
   }
 
   useEffect(() => { fetchData(); }, []);
