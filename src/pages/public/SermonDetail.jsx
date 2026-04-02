@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
-import { getSermonById, getRelatedSermons } from '../../lib/queries';
-import { ExternalLink, ChevronRight, Calendar, User, Church, Video, Headphones } from 'lucide-react';
+import { getSermonById, getRelatedSermons, logSermonView } from '../../lib/queries';
+import { ExternalLink, ChevronRight, Calendar, User, Church, Video, Headphones, Share2, Check } from 'lucide-react';
 import SermonCard from '../../components/public/SermonCard';
 import { useMeta } from '../../hooks/useMeta';
 
@@ -15,8 +15,10 @@ export default function SermonDetail() {
   const { pathname } = useLocation();
   const [sermon, setSermon] = useState(null);
   const [related, setRelated] = useState([]);
+  const [relatedLoading, setRelatedLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [copied, setCopied] = useState(false);
 
   const firstPillar = sermon?.sermon_pillars?.[0]?.pillars ?? null;
   useMeta({
@@ -34,11 +36,18 @@ export default function SermonDetail() {
         setSermon(s);
         const pillarId = s?.sermon_pillars?.[0]?.pillar_id;
         if (pillarId) {
-          getRelatedSermons(s.id, pillarId, 3).then(setRelated).catch(() => {});
+          setRelatedLoading(true);
+          getRelatedSermons(s.id, pillarId, 3)
+            .then(setRelated)
+            .catch(() => {})
+            .finally(() => setRelatedLoading(false));
         }
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
+
+    // Log page view (fire-and-forget)
+    void logSermonView(id, 'page_view');
   }, [id]);
 
   if (loading) {
@@ -159,18 +168,33 @@ export default function SermonDetail() {
               </p>
             )}
 
-            {/* External CTA */}
-            {sermon.external_url && (
-              <a
-                href={sermon.external_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white font-ui font-medium rounded-xl hover:bg-accent transition-colors mb-6"
+            {/* Actions */}
+            <div className="flex flex-wrap items-center gap-3 mb-6">
+              {sermon.external_url && (
+                <a
+                  href={sermon.external_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => { void logSermonView(sermon.id, 'cta_click'); }}
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white font-ui font-medium rounded-xl hover:bg-accent transition-colors"
+                >
+                  <span>{externalCtaLabel}</span>
+                  <CtaIcon size={14} />
+                </a>
+              )}
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.href).then(() => {
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  });
+                }}
+                className="inline-flex items-center gap-2 px-4 py-3 border border-amber-200 text-sm font-ui font-medium text-muted rounded-xl hover:text-primary hover:border-primary transition-colors"
               >
-                <span>{externalCtaLabel}</span>
-                <CtaIcon size={14} />
-              </a>
-            )}
+                {copied ? <Check size={14} /> : <Share2 size={14} />}
+                {copied ? 'Link copied!' : 'Share'}
+              </button>
+            </div>
 
             {/* Platform embed */}
             {embedUrl && (
@@ -204,7 +228,7 @@ export default function SermonDetail() {
         </div>
 
         {/* Related sermons */}
-        {related.length > 0 && firstPillar && (
+        {(relatedLoading || related.length > 0) && firstPillar && (
           <section className="mt-12">
             <div className="flex items-center justify-between mb-6">
               <h2
@@ -221,10 +245,21 @@ export default function SermonDetail() {
               </Link>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {related.map((s) => {
-                const sPillars = s.sermon_pillars?.map((sp) => sp.pillars).filter(Boolean) ?? [];
-                return <SermonCard key={s.id} sermon={s} pillars={sPillars} />;
-              })}
+              {relatedLoading
+                ? Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="bg-card-bg rounded-2xl overflow-hidden border border-amber-50">
+                      <div className="h-36 bg-amber-100 animate-pulse" />
+                      <div className="p-5 space-y-3">
+                        <div className="h-4 w-3/4 bg-amber-100 rounded animate-pulse" />
+                        <div className="h-3 w-1/2 bg-amber-50 rounded animate-pulse" />
+                        <div className="h-3 w-1/3 bg-amber-50 rounded animate-pulse" />
+                      </div>
+                    </div>
+                  ))
+                : related.map((s) => {
+                    const sPillars = s.sermon_pillars?.map((sp) => sp.pillars).filter(Boolean) ?? [];
+                    return <SermonCard key={s.id} sermon={s} pillars={sPillars} />;
+                  })}
             </div>
           </section>
         )}

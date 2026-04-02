@@ -1,19 +1,43 @@
 import { supabase } from './supabase';
 
+function sourceRank(source) {
+  return source === 'manual' ? 0 : 1;
+}
+
+function withStablePillarOrder(sermon) {
+  if (!sermon || !Array.isArray(sermon.sermon_pillars)) return sermon;
+  return {
+    ...sermon,
+    sermon_pillars: [...sermon.sermon_pillars].sort((a, b) => {
+      const sourceDiff = sourceRank(a?.source) - sourceRank(b?.source);
+      if (sourceDiff !== 0) return sourceDiff;
+
+      const confidenceA = Number(a?.confidence_score ?? 0);
+      const confidenceB = Number(b?.confidence_score ?? 0);
+      if (confidenceA !== confidenceB) return confidenceB - confidenceA;
+
+      const nameA = String(a?.pillars?.name || '');
+      const nameB = String(b?.pillars?.name || '');
+      return nameA.localeCompare(nameB);
+    }),
+  };
+}
+
 function withDisplayTitle(sermon, { preserveSourceTitle = false } = {}) {
   if (!sermon) return sermon;
+  const stableSermon = withStablePillarOrder(sermon);
   const customTitle = typeof sermon.custom_title === 'string' ? sermon.custom_title.trim() : '';
-  const sourceTitle = sermon.title;
+  const sourceTitle = stableSermon.title;
 
   if (!customTitle) {
     if (preserveSourceTitle) {
-      return { ...sermon, source_title: sourceTitle };
+      return { ...stableSermon, source_title: sourceTitle };
     }
-    return sermon;
+    return stableSermon;
   }
 
   const next = {
-    ...sermon,
+    ...stableSermon,
     title: customTitle,
   };
   if (preserveSourceTitle) {
@@ -118,6 +142,28 @@ export async function getRelatedSermons(sermonId, pillarId, limit = 3) {
   return data
     .map((row) => withDisplayTitle(row.sermons))
     .filter(Boolean);
+}
+
+// ── View tracking ────────────────────────────────────────────────────────────
+
+export async function logSermonView(sermonId, viewType = 'page_view') {
+  try {
+    const { error } = await supabase
+      .from('sermon_views')
+      .insert({ sermon_id: sermonId, view_type: viewType });
+
+    if (error) {
+      throw error;
+    }
+  } catch {
+    // Analytics should never interrupt the user journey.
+  }
+}
+
+export async function getPopularSermons(limit = 3) {
+  const { data, error } = await supabase.rpc('get_popular_sermons', { lim: limit });
+  if (error) throw error;
+  return (data || []).map((sermon) => withDisplayTitle(sermon));
 }
 
 // ── Admin queries ─────────────────────────────────────────────────────────────

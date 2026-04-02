@@ -131,11 +131,18 @@ async function applyReviewDecision(supabase, payload) {
     throw new Error(updateError.message);
   }
 
-  const { error: deleteError } = await supabase
+  const pillarDeleteQuery = supabase
     .from('sermon_pillars')
     .delete()
-    .eq('sermon_id', sermonId)
-    .eq('source', 'manual');
+    .eq('sermon_id', sermonId);
+
+  // Approved sermons should have deterministic, admin-owned themes only.
+  // For other review states, keep existing model suggestions and replace manual rows only.
+  if (reviewStatus !== 'approved') {
+    pillarDeleteQuery.eq('source', 'manual');
+  }
+
+  const { error: deleteError } = await pillarDeleteQuery;
 
   if (deleteError) {
     throw new Error(deleteError.message);

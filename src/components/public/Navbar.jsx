@@ -36,6 +36,16 @@ export default function Navbar() {
             <Search size={14} />
             Search
           </NavLink>
+          <NavLink
+            to="/about"
+            className={({ isActive }) =>
+              `text-sm font-ui transition-colors ${
+                isActive ? 'text-primary font-semibold' : 'text-muted hover:text-primary'
+              }`
+            }
+          >
+            About
+          </NavLink>
         </div>
       </div>
     </nav>

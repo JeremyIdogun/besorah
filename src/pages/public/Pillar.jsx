@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import { getPillarBySlug, getSermonsByPillar } from '../../lib/queries';
 import SermonList from '../../components/public/SermonList';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, ArrowUp } from 'lucide-react';
 import { useMeta } from '../../hooks/useMeta';
 
 export default function Pillar() {
@@ -12,6 +12,15 @@ export default function Pillar() {
   const [sermons, setSermons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showTop, setShowTop] = useState(false);
+
+  useEffect(() => {
+    function onScroll() {
+      setShowTop(window.scrollY > 600);
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   useMeta({
     title: pillar?.name,
@@ -86,6 +95,16 @@ export default function Pillar() {
         )}
         <SermonList sermons={sermons} loading={loading} />
       </div>
+
+      {showTop && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="fixed bottom-6 right-6 z-40 inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white shadow-card hover:bg-accent transition-colors"
+          aria-label="Back to top"
+        >
+          <ArrowUp size={18} />
+        </button>
+      )}
     </div>
   );
 }
