@@ -123,7 +123,7 @@ export async function getLatestSermons(limit = 6) {
     .from('sermons')
     .select('*')
     .eq('review_status', 'approved')
-    .order('updated_at', { ascending: false })
+    .order('created_at', { ascending: false })
     .limit(limit);
   if (error) throw error;
   return (data || []).map((sermon) => withDisplayTitle(sermon));
