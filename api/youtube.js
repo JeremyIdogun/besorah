@@ -95,8 +95,8 @@ async function ingestPlaylist({ supabase, playlistId }) {
     const pillarBySlug = Object.fromEntries((pillars || []).map((p) => [p.slug, p.id]));
 
     let newEpisodes = 0;
-    let updatedEpisodes = 0;
     let skippedEpisodes = 0;
+    let skippedExistingEpisodes = 0;
     let failedEpisodes = 0;
     const errorSamples = [];
 
@@ -126,6 +126,11 @@ async function ingestPlaylist({ supabase, playlistId }) {
         continue;
       }
 
+      if (existing) {
+        skippedExistingEpisodes++;
+        continue;
+      }
+
       const payload = {
         external_episode_id: `youtube:${videoId}`,
         youtube_video_id: videoId,
@@ -138,59 +143,56 @@ async function ingestPlaylist({ supabase, playlistId }) {
         external_url: `https://www.youtube.com/watch?v=${videoId}`,
         embed_url: `https://www.youtube.com/embed/${videoId}`,
         image_url: bestThumbnail(snippet),
-        updated_at: new Date().toISOString(),
+        classification_status: 'pending',
+        review_status: 'unreviewed',
       };
 
-      if (!existing) {
-        payload.classification_status = 'pending';
-        payload.review_status = 'unreviewed';
-      }
-
-      const { data: sermon, error: upsertError } = await supabase
+      const { data: sermon, error: insertError } = await supabase
         .from('sermons')
-        .upsert(payload, { onConflict: 'youtube_video_id' })
+        .insert(payload)
         .select()
         .single();
 
-      if (upsertError) {
+      if (insertError) {
+        if (insertError.code === '23505') {
+          skippedExistingEpisodes++;
+          continue;
+        }
+
         failedEpisodes++;
         if (errorSamples.length < 5) {
-          errorSamples.push(`Insert failed for ${videoId}: ${upsertError.message}`);
+          errorSamples.push(`Insert failed for ${videoId}: ${insertError.message}`);
         }
         continue;
       }
 
-      if (!existing) {
-        newEpisodes++;
-        const suggestions = suggestPillars({
-          title,
-          description,
-          showTitle: playlist?.snippet?.title || '',
-          publisher: channelTitle || '',
-        });
+      newEpisodes++;
+      const suggestions = suggestPillars({
+        title,
+        description,
+        showTitle: playlist?.snippet?.title || '',
+        publisher: channelTitle || '',
+      });
 
-        if (suggestions.length) {
-          const tagRows = suggestions
-            .map((suggestion) => ({
-              sermon_id: sermon.id,
-              pillar_id: pillarBySlug[suggestion.pillar_slug],
-              source: suggestion.source,
-              confidence_score: suggestion.confidence_score,
-            }))
-            .filter((row) => row.pillar_id);
+      if (suggestions.length) {
+        const tagRows = suggestions
+          .map((suggestion) => ({
+            sermon_id: sermon.id,
+            pillar_id: pillarBySlug[suggestion.pillar_slug],
+            source: suggestion.source,
+            confidence_score: suggestion.confidence_score,
+          }))
+          .filter((row) => row.pillar_id);
 
-          if (tagRows.length) {
-            await supabase
-              .from('sermon_pillars')
-              .upsert(tagRows, { onConflict: 'sermon_id,pillar_id', ignoreDuplicates: true });
-          }
+        if (tagRows.length) {
+          await supabase
+            .from('sermon_pillars')
+            .upsert(tagRows, { onConflict: 'sermon_id,pillar_id', ignoreDuplicates: true });
         }
-      } else {
-        updatedEpisodes++;
       }
     }
 
-    const processedEpisodes = newEpisodes + updatedEpisodes;
+    const processedEpisodes = newEpisodes + skippedExistingEpisodes;
 
     if (videoIds.length > 0 && processedEpisodes === 0) {
       if (failedEpisodes > 0) {
@@ -218,7 +220,8 @@ async function ingestPlaylist({ supabase, playlistId }) {
           playlistId,
           playlistTitle: playlist?.snippet?.title || null,
           new: newEpisodes,
-          updated: updatedEpisodes,
+          updated: 0,
+          skipped_existing: skippedExistingEpisodes,
           skipped: skippedEpisodes,
           failed: failedEpisodes,
           processed: processedEpisodes,
@@ -234,8 +237,9 @@ async function ingestPlaylist({ supabase, playlistId }) {
         title: playlist?.snippet?.title || 'Untitled playlist',
       },
       newEpisodes,
-      updatedEpisodes,
+      updatedEpisodes: 0,
       skippedEpisodes,
+      skippedExistingEpisodes,
       failedEpisodes,
       processedEpisodes,
       totalVideoIds: videoIds.length,

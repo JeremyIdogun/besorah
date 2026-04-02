@@ -21,14 +21,25 @@ async function syncShow(supabase, token, showId, pillarBySlug) {
   const episodes = await fetchAllSpotifyShowEpisodes(token, showId);
 
   let newEpisodes = 0;
-  let updatedEpisodes = 0;
+  let skippedExistingEpisodes = 0;
+  let failedEpisodes = 0;
 
   for (const ep of episodes) {
-    const { data: existing } = await supabase
+    const { data: existing, error: existingError } = await supabase
       .from('sermons')
       .select('id')
       .eq('spotify_episode_id', ep.id)
-      .single();
+      .maybeSingle();
+
+    if (existingError) {
+      failedEpisodes++;
+      continue;
+    }
+
+    if (existing) {
+      skippedExistingEpisodes++;
+      continue;
+    }
 
     const releaseDate = ep.release_date
       ? new Date(ep.release_date).toISOString().split('T')[0]
@@ -45,49 +56,48 @@ async function syncShow(supabase, token, showId, pillarBySlug) {
       external_url: ep.external_urls?.spotify ?? '',
       embed_url: `https://open.spotify.com/embed/episode/${ep.id}`,
       image_url: ep.images?.[0]?.url ?? show.images?.[0]?.url ?? null,
-      updated_at: new Date().toISOString(),
+      classification_status: 'pending',
+      review_status: 'unreviewed',
     };
-
-    if (!existing) {
-      payload.classification_status = 'pending';
-      payload.review_status = 'unreviewed';
-    }
 
     const { data: sermon, error } = await supabase
       .from('sermons')
-      .upsert(payload, { onConflict: 'spotify_episode_id' })
+      .insert(payload)
       .select()
       .single();
 
-    if (error) continue;
-
-    if (!existing) {
-      newEpisodes++;
-      const suggestions = suggestPillars({
-        title: ep.name,
-        description: ep.description || '',
-        showTitle: show.name,
-        publisher: show.publisher || '',
-      });
-
-      if (suggestions.length) {
-        const tagRows = suggestions
-          .map((s) => ({
-            sermon_id: sermon.id,
-            pillar_id: pillarBySlug[s.pillar_slug],
-            source: s.source,
-            confidence_score: s.confidence_score,
-          }))
-          .filter((r) => r.pillar_id);
-
-        if (tagRows.length) {
-          await supabase
-            .from('sermon_pillars')
-            .upsert(tagRows, { onConflict: 'sermon_id,pillar_id', ignoreDuplicates: true });
-        }
+    if (error) {
+      if (error.code === '23505') {
+        skippedExistingEpisodes++;
+      } else {
+        failedEpisodes++;
       }
-    } else {
-      updatedEpisodes++;
+      continue;
+    }
+
+    newEpisodes++;
+    const suggestions = suggestPillars({
+      title: ep.name,
+      description: ep.description || '',
+      showTitle: show.name,
+      publisher: show.publisher || '',
+    });
+
+    if (suggestions.length) {
+      const tagRows = suggestions
+        .map((s) => ({
+          sermon_id: sermon.id,
+          pillar_id: pillarBySlug[s.pillar_slug],
+          source: s.source,
+          confidence_score: s.confidence_score,
+        }))
+        .filter((r) => r.pillar_id);
+
+      if (tagRows.length) {
+        await supabase
+          .from('sermon_pillars')
+          .upsert(tagRows, { onConflict: 'sermon_id,pillar_id', ignoreDuplicates: true });
+      }
     }
   }
 
@@ -96,7 +106,7 @@ async function syncShow(supabase, token, showId, pillarBySlug) {
     .update({ last_synced_at: new Date().toISOString() })
     .eq('spotify_show_id', showId);
 
-  return { newEpisodes, updatedEpisodes };
+  return { newEpisodes, skippedExistingEpisodes, failedEpisodes };
 }
 
 export default async function handler(req, res) {
@@ -123,18 +133,33 @@ export default async function handler(req, res) {
     const { data: pillars } = await supabase.from('pillars').select('id, slug');
     const pillarBySlug = Object.fromEntries(pillars.map((p) => [p.slug, p.id]));
 
-    const { newEpisodes, updatedEpisodes } = await syncShow(supabase, token, showId, pillarBySlug);
+    const { newEpisodes, skippedExistingEpisodes, failedEpisodes } = await syncShow(
+      supabase,
+      token,
+      showId,
+      pillarBySlug,
+    );
 
     await supabase
       .from('ingestion_runs')
       .update({
         status: 'completed',
         completed_at: new Date().toISOString(),
-        summary_json: { new: newEpisodes, updated: updatedEpisodes },
+        summary_json: {
+          new: newEpisodes,
+          updated: 0,
+          skipped_existing: skippedExistingEpisodes,
+          failed: failedEpisodes,
+        },
       })
       .eq('id', runId);
 
-    return res.status(200).json({ newEpisodes, updatedEpisodes });
+    return res.status(200).json({
+      newEpisodes,
+      updatedEpisodes: 0,
+      skippedExistingEpisodes,
+      failedEpisodes,
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unexpected server error';
 

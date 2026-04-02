@@ -23,7 +23,9 @@ export default function SyncButton({ showId, label = 'Sync', onSynced }) {
         data = null;
       }
       if (!res.ok) throw new Error(data.error || 'Sync failed');
-      setResult(`Synced: ${data.newEpisodes} new, ${data.updatedEpisodes} updated.`);
+      setResult(
+        `Synced: ${data.newEpisodes} new, ${data.skippedExistingEpisodes ?? 0} skipped existing, ${data.failedEpisodes ?? 0} failed.`,
+      );
       onSynced?.();
     } catch (err) {
       setError(err.message);

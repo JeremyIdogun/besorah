@@ -59,8 +59,9 @@ async function importSavedEpisodes(supabase, token, pillarBySlug, maxEpisodes = 
 
   let processedEpisodes = 0;
   let newEpisodes = 0;
-  let updatedEpisodes = 0;
   let skippedEpisodes = 0;
+  let skippedExistingEpisodes = 0;
+  let failedEpisodes = 0;
   let pages = 0;
 
   while (url) {
@@ -88,7 +89,12 @@ async function importSavedEpisodes(supabase, token, pillarBySlug, maxEpisodes = 
         .maybeSingle();
 
       if (existingError) {
-        skippedEpisodes++;
+        failedEpisodes++;
+        continue;
+      }
+
+      if (existing) {
+        skippedExistingEpisodes++;
         continue;
       }
 
@@ -103,54 +109,49 @@ async function importSavedEpisodes(supabase, token, pillarBySlug, maxEpisodes = 
         external_url: ep.external_urls?.spotify ?? '',
         embed_url: `https://open.spotify.com/embed/episode/${ep.id}`,
         image_url: ep.images?.[0]?.url ?? show?.images?.[0]?.url ?? null,
-        updated_at: new Date().toISOString(),
+        classification_status: 'pending',
+        review_status: 'unreviewed',
       };
-
-      if (!existing) {
-        payload.classification_status = 'pending';
-        payload.review_status = 'unreviewed';
-      }
 
       const { data: sermon, error: upsertError } = await supabase
         .from('sermons')
-        .upsert(payload, { onConflict: 'spotify_episode_id' })
+        .insert(payload)
         .select()
         .single();
 
       if (upsertError) {
-        skippedEpisodes++;
+        if (upsertError.code === '23505') {
+          skippedExistingEpisodes++;
+        } else {
+          failedEpisodes++;
+        }
         continue;
       }
 
       processedEpisodes++;
+      newEpisodes++;
+      const suggestions = suggestPillars({
+        title: ep.name,
+        description: ep.description || '',
+        showTitle: show?.name || '',
+        publisher: show?.publisher || '',
+      });
 
-      if (!existing) {
-        newEpisodes++;
-        const suggestions = suggestPillars({
-          title: ep.name,
-          description: ep.description || '',
-          showTitle: show?.name || '',
-          publisher: show?.publisher || '',
-        });
+      if (suggestions.length) {
+        const tagRows = suggestions
+          .map((s) => ({
+            sermon_id: sermon.id,
+            pillar_id: pillarBySlug[s.pillar_slug],
+            source: s.source,
+            confidence_score: s.confidence_score,
+          }))
+          .filter((r) => r.pillar_id);
 
-        if (suggestions.length) {
-          const tagRows = suggestions
-            .map((s) => ({
-              sermon_id: sermon.id,
-              pillar_id: pillarBySlug[s.pillar_slug],
-              source: s.source,
-              confidence_score: s.confidence_score,
-            }))
-            .filter((r) => r.pillar_id);
-
-          if (tagRows.length) {
-            await supabase
-              .from('sermon_pillars')
-              .upsert(tagRows, { onConflict: 'sermon_id,pillar_id', ignoreDuplicates: true });
-          }
+        if (tagRows.length) {
+          await supabase
+            .from('sermon_pillars')
+            .upsert(tagRows, { onConflict: 'sermon_id,pillar_id', ignoreDuplicates: true });
         }
-      } else {
-        updatedEpisodes++;
       }
     }
 
@@ -163,8 +164,10 @@ async function importSavedEpisodes(supabase, token, pillarBySlug, maxEpisodes = 
 
   return {
     newEpisodes,
-    updatedEpisodes,
+    updatedEpisodes: 0,
     skippedEpisodes,
+    skippedExistingEpisodes,
+    failedEpisodes,
     processedEpisodes,
     pages,
   };
@@ -212,8 +215,10 @@ export default async function handler(req, res) {
         summary_json: {
           source: 'saved_episodes',
           new: result.newEpisodes,
-          updated: result.updatedEpisodes,
+          updated: 0,
+          skipped_existing: result.skippedExistingEpisodes,
           skipped: result.skippedEpisodes,
+          failed: result.failedEpisodes,
           processed: result.processedEpisodes,
           pages: result.pages,
         },
