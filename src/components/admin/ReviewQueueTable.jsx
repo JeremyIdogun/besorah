@@ -21,6 +21,7 @@ export default function ReviewQueueTable({
   onUpdateDraftPillarIds,
   onReviewOne,
   onReviewBulk,
+  onDeleteBulk,
   onDeleteOne,
   emptyMessage = 'No sermons pending review.',
 }) {
@@ -97,6 +98,15 @@ export default function ReviewQueueTable({
         >
           <X size={12} />
           Reject Selected
+        </button>
+        <button
+          type="button"
+          onClick={onDeleteBulk}
+          disabled={!selectedSermonIds.length || bulkSaving}
+          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-red-50 text-red-700 text-xs font-ui font-medium hover:bg-red-100 transition-colors disabled:opacity-50"
+        >
+          <Trash2 size={12} />
+          Delete Selected
         </button>
       </div>
 

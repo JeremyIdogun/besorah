@@ -202,6 +202,69 @@ export default function ReviewQueue() {
     }
   }
 
+  async function deleteBulk() {
+    if (!selectedSermonIds.length) return;
+    const selectedSermons = sermons.filter((sermon) => selectedSermonIds.includes(sermon.id));
+    if (!selectedSermons.length) return;
+
+    const count = selectedSermons.length;
+    const confirmed = window.confirm(
+      `Delete ${count} selected sermon${count === 1 ? '' : 's'} permanently? This cannot be undone.`,
+    );
+    if (!confirmed) return;
+
+    setBulkSaving(true);
+    setError(null);
+    setNotice(null);
+
+    try {
+      const results = await Promise.all(
+        selectedSermons.map(async (sermon) => {
+          try {
+            await deleteAdminSermon(sermon.id);
+            return { sermonId: sermon.id, ok: true };
+          } catch (err) {
+            const message = err instanceof Error ? err.message : 'Unexpected server error';
+            return { sermonId: sermon.id, ok: false, error: message };
+          }
+        }),
+      );
+
+      const failedIds = new Set(
+        results
+          .filter((row) => !row.ok)
+          .map((row) => row.sermonId),
+      );
+
+      const successfulIds = selectedSermons
+        .map((sermon) => sermon.id)
+        .filter((id) => !failedIds.has(id));
+
+      if (successfulIds.length) {
+        setSermons((prev) => prev.filter((sermon) => !successfulIds.includes(sermon.id)));
+        setDraftPillarIdsBySermonId((prev) => {
+          const next = { ...prev };
+          successfulIds.forEach((id) => delete next[id]);
+          return next;
+        });
+      }
+
+      setSelectedSermonIds((prev) => prev.filter((id) => !successfulIds.includes(id)));
+
+      const failed = results.length - successfulIds.length;
+      if (failed > 0) {
+        const firstError = results.find((row) => !row.ok)?.error;
+        setError(`Bulk delete completed with ${failed} failures.${firstError ? ` ${firstError}` : ''}`);
+      } else {
+        setNotice(`Deleted ${successfulIds.length} sermon${successfulIds.length === 1 ? '' : 's'}.`);
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBulkSaving(false);
+    }
+  }
+
   async function deleteOne(sermonId) {
     const sermon = sermons.find((row) => row.id === sermonId);
     if (!sermon) return;
@@ -293,6 +356,7 @@ export default function ReviewQueue() {
             onUpdateDraftPillarIds={updateDraftPillarIds}
             onReviewOne={reviewOne}
             onReviewBulk={reviewBulk}
+            onDeleteBulk={deleteBulk}
             onDeleteOne={deleteOne}
             emptyMessage={query ? 'No pending sermons match this search.' : 'No sermons pending review.'}
           />
