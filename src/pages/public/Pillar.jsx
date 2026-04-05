@@ -1,15 +1,21 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link, useLocation } from 'react-router-dom';
+import { useParams, Link, useLocation, useSearchParams } from 'react-router-dom';
 import { getPillarBySlug, getSermonsByPillar } from '../../lib/queries';
 import SermonList from '../../components/public/SermonList';
-import { ChevronRight, ArrowUp } from 'lucide-react';
+import { ChevronRight, ArrowUp, ChevronLeft } from 'lucide-react';
 import { useMeta } from '../../hooks/useMeta';
+
+const PAGE_SIZE = 24;
 
 export default function Pillar() {
   const { slug } = useParams();
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rawPage = Number.parseInt(searchParams.get('page') || '1', 10);
+  const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
   const [pillar, setPillar] = useState(null);
   const [sermons, setSermons] = useState([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showTop, setShowTop] = useState(false);
@@ -25,22 +31,42 @@ export default function Pillar() {
   useMeta({
     title: pillar?.name,
     description: pillar?.description
-      ? `${pillar.description} Browse ${sermons.length} sermons on ${pillar.name}.`
+      ? `${pillar.description} Browse ${total} sermon${total === 1 ? '' : 's'} on ${pillar.name}.`
       : undefined,
-    url: `${window.location.origin}${pathname}`,
+    url: `${window.location.origin}${pathname}${search}`,
   });
 
   useEffect(() => {
     setLoading(true);
+    setError(null);
     getPillarBySlug(slug)
       .then(async (p) => {
         setPillar(p);
-        const s = await getSermonsByPillar(p.id);
-        setSermons(s);
+        const { sermons: results, total: count } = await getSermonsByPillar(p.id, {
+          page,
+          pageSize: PAGE_SIZE,
+        });
+        const lastPage = Math.max(1, Math.ceil((count || 0) / PAGE_SIZE));
+        if (page > lastPage) {
+          setSearchParams(lastPage === 1 ? {} : { page: String(lastPage) }, { replace: true });
+          return;
+        }
+
+        setSermons(results);
+        setTotal(count);
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [slug]);
+  }, [slug, page, setSearchParams]);
+
+  function goToPage(nextPage) {
+    setSearchParams(nextPage === 1 ? {} : { page: String(nextPage) });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const from = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const to = Math.min(page * PAGE_SIZE, total);
 
   if (error) {
     return (
@@ -90,10 +116,52 @@ export default function Pillar() {
       <div className="max-w-5xl mx-auto px-4 py-10">
         {!loading && pillar && (
           <p className="text-sm text-muted font-ui mb-6">
-            {sermons.length} sermon{sermons.length !== 1 ? 's' : ''} in this pillar
+            {total === 0
+              ? 'No sermons in this pillar yet.'
+              : `Showing ${from}–${to} of ${total} sermon${total !== 1 ? 's' : ''}`}
           </p>
         )}
         <SermonList sermons={sermons} loading={loading} />
+
+        {!loading && totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 mt-10">
+            <button
+              onClick={() => goToPage(1)}
+              disabled={page <= 1}
+              className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-amber-200 text-sm font-ui text-muted hover:text-primary hover:border-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <ChevronLeft size={15} />
+              <ChevronLeft size={15} className="-ml-2" />
+            </button>
+            <button
+              onClick={() => goToPage(page - 1)}
+              disabled={page <= 1}
+              className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-amber-200 text-sm font-ui text-muted hover:text-primary hover:border-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <ChevronLeft size={15} />
+              Prev
+            </button>
+            <span className="text-sm font-ui text-muted px-2">
+              Page {page} of {totalPages}
+            </span>
+            <button
+              onClick={() => goToPage(page + 1)}
+              disabled={page >= totalPages}
+              className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-amber-200 text-sm font-ui text-muted hover:text-primary hover:border-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Next
+              <ChevronRight size={15} />
+            </button>
+            <button
+              onClick={() => goToPage(totalPages)}
+              disabled={page >= totalPages}
+              className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-amber-200 text-sm font-ui text-muted hover:text-primary hover:border-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <ChevronRight size={15} />
+              <ChevronRight size={15} className="-ml-2" />
+            </button>
+          </div>
+        )}
       </div>
 
       {showTop && (

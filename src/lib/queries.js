@@ -74,17 +74,25 @@ export async function getPillarBySlug(slug) {
   return data;
 }
 
-export async function getSermonsByPillar(pillarId) {
-  const { data, error } = await supabase
-    .from('sermon_pillars')
-    .select('sermons!inner(*)')
-    .eq('pillar_id', pillarId)
-    .eq('sermons.review_status', 'approved');
+export async function getSermonsByPillar(pillarId, { page = 1, pageSize = 24 } = {}) {
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  const { data, error, count } = await supabase
+    .from('sermons')
+    .select('*, sermon_pillars!inner(pillar_id)', { count: 'exact' })
+    .eq('review_status', 'approved')
+    .eq('sermon_pillars.pillar_id', pillarId)
+    .order('created_at', { ascending: false })
+    .range(from, to);
   if (error) throw error;
-  return data
-    .map((row) => withDisplayTitle(row.sermons))
-    .filter(Boolean)
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  return {
+    sermons: (data || []).map((sermon) => withDisplayTitle(sermon)),
+    total: count ?? 0,
+    page,
+    pageSize,
+  };
 }
 
 export async function searchSermons(query, { page = 1, pageSize = 20 } = {}) {
