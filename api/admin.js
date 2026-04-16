@@ -6,6 +6,7 @@ import {
   verifyAdminCredentials,
 } from '../lib/server/admin-auth.js';
 import { createSupabaseAdminClient } from '../lib/server/spotify.js';
+import { getPostHogClient } from '../lib/server/posthog.js';
 
 const VALID_REVIEW_STATUSES = new Set(['approved', 'rejected', 'unreviewed']);
 let supabaseClient = null;
@@ -187,10 +188,24 @@ async function handleLogin(req, res) {
   }
 
   if (!verifyAdminCredentials(email, password)) {
+    getPostHogClient().capture({
+      distinctId: email,
+      event: 'admin_login_failed',
+      properties: { email },
+    });
     return res.status(401).json({ error: 'Invalid admin credentials' });
   }
 
   setAdminSessionCookie(req, res, email);
+  getPostHogClient().identify({
+    distinctId: email,
+    properties: { $set: { email, role: 'admin' } },
+  });
+  getPostHogClient().capture({
+    distinctId: email,
+    event: 'admin_logged_in',
+    properties: { email },
+  });
   return res.status(200).json({ ok: true });
 }
 
@@ -261,6 +276,13 @@ async function handleShows(req, res) {
       return res.status(500).json({ error: error.message });
     }
 
+    const session = getAdminSession(req);
+    const distinctId = session?.email || 'admin';
+    getPostHogClient().capture({
+      distinctId,
+      event: 'show_removed',
+      properties: { show_id: id },
+    });
     return res.status(200).json({ ok: true });
   }
 
@@ -306,6 +328,13 @@ async function handlePillars(req, res) {
       return res.status(500).json({ error: error.message });
     }
 
+    const session = getAdminSession(req);
+    const distinctId = session?.email || 'admin';
+    getPostHogClient().capture({
+      distinctId,
+      event: 'pillar_created',
+      properties: { pillar_id: data.id, name: data.name, slug: data.slug },
+    });
     return res.status(201).json(data);
   }
 
@@ -335,6 +364,13 @@ async function handlePillars(req, res) {
       return res.status(500).json({ error: error.message });
     }
 
+    const session = getAdminSession(req);
+    const distinctId = session?.email || 'admin';
+    getPostHogClient().capture({
+      distinctId,
+      event: 'pillar_updated',
+      properties: { pillar_id: data.id, name: data.name, slug: data.slug },
+    });
     return res.status(200).json(data);
   }
 
@@ -371,6 +407,13 @@ async function handlePillars(req, res) {
       return res.status(500).json({ error: error.message });
     }
 
+    const session = getAdminSession(req);
+    const distinctId = session?.email || 'admin';
+    getPostHogClient().capture({
+      distinctId,
+      event: 'pillar_deleted',
+      properties: { pillar_id: id },
+    });
     return res.status(200).json({ ok: true, id });
   }
 
@@ -486,6 +529,13 @@ async function handleSermon(req, res) {
       return res.status(500).json({ error: error.message });
     }
 
+    const session = getAdminSession(req);
+    const distinctId = session?.email || 'admin';
+    getPostHogClient().capture({
+      distinctId,
+      event: 'sermon_deleted',
+      properties: { sermon_id: id },
+    });
     return res.status(200).json({ ok: true, id });
   }
 
@@ -505,6 +555,19 @@ async function handleReviewSermon(req, res) {
   }
 
   await applyReviewDecision(supabase, payload);
+  const session = getAdminSession(req);
+  const distinctId = session?.email || 'admin';
+  getPostHogClient().capture({
+    distinctId,
+    event: 'sermon_reviewed',
+    properties: {
+      sermon_id: payload.sermonId,
+      review_status: payload.reviewStatus,
+      pillar_count: payload.pillarIds.length,
+      preacher: payload.preacher,
+      church: payload.church,
+    },
+  });
   return res.status(200).json({ ok: true });
 }
 
@@ -533,6 +596,17 @@ async function handleReviewSermonsBulk(req, res) {
   }
 
   const failed = results.filter((result) => !result.ok);
+  const session = getAdminSession(req);
+  const distinctId = session?.email || 'admin';
+  getPostHogClient().capture({
+    distinctId,
+    event: 'sermons_reviewed_bulk',
+    properties: {
+      processed: results.length,
+      failed: failed.length,
+      succeeded: results.length - failed.length,
+    },
+  });
   return res.status(200).json({
     ok: failed.length === 0,
     processed: results.length,
@@ -575,6 +649,9 @@ export default async function handler(req, res) {
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unexpected server error';
+    const session = getAdminSession(req);
+    const distinctId = session?.email || 'admin';
+    getPostHogClient().captureException(err, distinctId);
     return res.status(500).json({ error: message });
   }
 }

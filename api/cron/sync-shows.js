@@ -6,6 +6,7 @@ import {
   fetchSpotifyShow,
   getSpotifyToken,
 } from '../../lib/server/spotify.js';
+import { getPostHogClient } from '../../lib/server/posthog.js';
 
 const supabase = createSupabaseAdminClient();
 
@@ -158,9 +159,22 @@ export default async function handler(req, res) {
         })
         .eq('id', run?.id);
 
+      getPostHogClient().captureException(err, 'cron');
       results.push({ showId: show.spotify_show_id, error: err.message });
     }
   }
 
+  const succeeded = results.filter((r) => !r.error);
+  const failed = results.filter((r) => r.error);
+  getPostHogClient().capture({
+    distinctId: 'cron',
+    event: 'cron_shows_synced',
+    properties: {
+      shows_processed: results.length,
+      shows_succeeded: succeeded.length,
+      shows_failed: failed.length,
+      total_new_episodes: succeeded.reduce((sum, r) => sum + (r.newEpisodes || 0), 0),
+    },
+  });
   return res.status(200).json({ results });
 }

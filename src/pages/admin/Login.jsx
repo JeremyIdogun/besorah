@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { usePostHog } from '@posthog/react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Loader } from 'lucide-react';
 
@@ -11,6 +12,7 @@ function useNextPath() {
 export default function AdminLogin() {
   const navigate = useNavigate();
   const next = useNextPath();
+  const posthog = usePostHog();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -26,6 +28,12 @@ export default function AdminLogin() {
         const res = await fetch('/api/admin/session', { credentials: 'include' });
         const data = await res.json();
         if (!cancelled && data.authenticated) {
+          if (data.email) {
+            posthog.identify(data.email, {
+              email: data.email,
+              role: 'admin',
+            });
+          }
           navigate(next, { replace: true });
           return;
         }
@@ -40,7 +48,7 @@ export default function AdminLogin() {
     return () => {
       cancelled = true;
     };
-  }, [navigate, next]);
+  }, [navigate, next, posthog]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -64,6 +72,10 @@ export default function AdminLogin() {
       if (!res.ok) {
         throw new Error(data?.error || `Login failed (${res.status})`);
       }
+      posthog.identify(email, {
+        email,
+        role: 'admin',
+      });
       navigate(next, { replace: true });
     } catch (err) {
       setError(err.message);

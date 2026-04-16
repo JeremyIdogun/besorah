@@ -15,6 +15,7 @@ import SermonEdit from './pages/admin/SermonEdit';
 import ApprovedSermons from './pages/admin/ApprovedSermons';
 import Themes from './pages/admin/Themes';
 import AdminGate from './components/admin/AdminGate';
+import PostHogAdminIdentity from './components/admin/PostHogAdminIdentity';
 import NotFound from './pages/NotFound';
 import ScrollToTop from './components/ScrollToTop';
 
@@ -32,6 +33,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
+      <PostHogAdminIdentity />
       <Routes>
         {/* Public routes */}
         <Route

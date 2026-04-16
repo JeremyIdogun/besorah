@@ -6,6 +6,7 @@ import {
   fetchSpotifyShow,
   getSpotifyToken,
 } from '../../lib/server/spotify.js';
+import { getPostHogClient } from '../../lib/server/posthog.js';
 
 let supabaseClient = null;
 
@@ -157,6 +158,17 @@ export default async function handler(req, res) {
       })
       .eq('id', runId);
 
+    getPostHogClient().capture({
+      distinctId: 'admin',
+      event: 'spotify_show_imported',
+      properties: {
+        show_id: showId,
+        show_title: show.name,
+        episodes_imported: episodesImported,
+        episodes_skipped: skippedExistingEpisodes,
+        episodes_failed: failedEpisodes,
+      },
+    });
     return res.status(200).json({
       show: { title: show.name },
       episodesImported,
@@ -178,6 +190,7 @@ export default async function handler(req, res) {
         .eq('id', runId);
     }
 
+    getPostHogClient().captureException(err, 'admin');
     return res.status(500).json({ error: message });
   }
 }
