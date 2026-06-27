@@ -249,7 +249,7 @@ export default function SermonDetail() {
                 View all
               </Link>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {relatedLoading
                 ? Array.from({ length: 3 }).map((_, i) => (
                     <div key={i} className="bg-surface rounded-[14px] overflow-hidden" style={{ border: '1px solid rgba(180,130,70,0.14)' }}>

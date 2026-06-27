@@ -5,7 +5,7 @@ import SermonCard from './SermonCard';
 export default function SermonList({ sermons, loading = false }) {
   if (loading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className="bg-surface rounded-[14px] h-72 animate-pulse" />
         ))}
@@ -28,7 +28,7 @@ export default function SermonList({ sermons, loading = false }) {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4.5">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
       {sermons.map((sermon) => {
         const pillars = sermon.sermon_pillars?.map((sp) => sp.pillars).filter(Boolean) ?? [];
         return <SermonCard key={sermon.id} sermon={sermon} pillars={pillars} />;

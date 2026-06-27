@@ -46,17 +46,17 @@ export default function SermonCard({ sermon, pillars = [] }) {
         </div>
       )}
 
-      <div style={{ padding: '16px 18px' }}>
+      <div className="p-5">
         <Link to={`/sermon/${id}`}>
           <h3
-            className="font-bold leading-[1.45] mb-2.5 line-clamp-2 hover:opacity-80 transition-opacity"
-            style={{ fontFamily: 'Georgia, serif', fontSize: 14, color: '#1A0E06', margin: '0 0 10px' }}
+            className="font-bold leading-snug mb-3 line-clamp-2 hover:opacity-80 transition-opacity"
+            style={{ fontFamily: 'Georgia, serif', fontSize: 14, color: '#1A0E06' }}
           >
             {title}
           </h3>
         </Link>
 
-        <div className="flex flex-col gap-0.5 mb-3">
+        <div className="flex flex-col gap-1 mb-4">
           {preacher && (
             <span className="font-ui text-xs font-medium" style={{ color: '#6A4A2A' }}>
               {preacher}

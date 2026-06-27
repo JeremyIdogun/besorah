@@ -45,21 +45,22 @@ export default function Home() {
     <div className="min-h-screen bg-background">
       {/* Hero */}
       <div
-        className="text-center"
+        className="text-center px-6 sm:px-16"
         style={{
           background: 'linear-gradient(140deg, #2A1004 0%, #4E1C08 55%, #3A1806 100%)',
-          padding: '80px 64px',
+          paddingTop: 80,
+          paddingBottom: 80,
         }}
       >
         <div className="max-w-2xl mx-auto">
           <img
             src="/branding/besorah_primary_logo.svg"
             alt="Besorah — Good News, Organised by Theme"
-            className="w-auto mx-auto"
-            style={{ height: 148, marginBottom: 24 }}
+            className="w-auto mx-auto mb-6"
+            style={{ height: 148 }}
           />
           <p
-            className="italic mb-3.5"
+            className="italic mb-3"
             style={{
               fontFamily: 'Georgia, serif',
               fontSize: 15,
@@ -70,13 +71,12 @@ export default function Home() {
             בְּשׂוֹרָה · Good News, Organised by Theme
           </p>
           <p
-            className="font-ui mx-auto"
+            className="font-ui mx-auto mb-10"
             style={{
               fontSize: 16,
               color: '#C8B090',
               maxWidth: 440,
               lineHeight: 1.65,
-              marginBottom: 44,
             }}
           >
             Discover Christian sermons curated by theme. Find preaching that speaks to where you are in your faith journey.
@@ -95,9 +95,10 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-16 py-13">
+      {/* Content sections */}
+      <div className="max-w-6xl mx-auto px-6 sm:px-16 pt-14 pb-20">
         {error && (
-          <div className="mb-10 rounded-2xl border border-red-100 bg-red-50 p-6 text-center">
+          <div className="mb-12 rounded-2xl border border-red-100 bg-red-50 p-6 text-center">
             <p className="text-sm text-red-800 font-ui mb-3">{error}</p>
             <button
               onClick={fetchData}
@@ -110,18 +111,18 @@ export default function Home() {
         )}
 
         {/* Pillars */}
-        <section className="mb-15">
+        <section className="mb-16">
           <h2
-            className="text-[26px] font-bold mb-1.5"
+            className="text-2xl font-bold mb-2"
             style={{ color: '#2A1004', fontFamily: 'Georgia, serif' }}
           >
             Browse by Theme
           </h2>
-          <p className="text-sm font-ui mb-5.5" style={{ color: '#8A6A4A' }}>
+          <p className="text-sm font-ui mb-7" style={{ color: '#8A6A4A' }}>
             Explore our core themes and choose one to dive into sermons.
           </p>
           {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {Array.from({ length: 8 }).map((_, i) => (
                 <div key={i} className="h-36 bg-surface rounded-[14px] animate-pulse" />
               ))}
@@ -133,14 +134,14 @@ export default function Home() {
 
         {/* Popular */}
         {popular.length > 0 && (
-          <section className="mb-15">
+          <section className="mb-16">
             <h2
-              className="text-[26px] font-bold mb-1.5"
+              className="text-2xl font-bold mb-2"
               style={{ color: '#2A1004', fontFamily: 'Georgia, serif' }}
             >
               Popular Sermons
             </h2>
-            <p className="text-sm font-ui mb-5.5" style={{ color: '#8A6A4A' }}>
+            <p className="text-sm font-ui mb-7" style={{ color: '#8A6A4A' }}>
               Most listened-to and watched sermons on Besorah.
             </p>
             <SermonList sermons={popular} loading={false} />
@@ -151,12 +152,12 @@ export default function Home() {
         {(latest.length > 0 || loading) && (
           <section>
             <h2
-              className="text-[26px] font-bold mb-1.5"
+              className="text-2xl font-bold mb-2"
               style={{ color: '#2A1004', fontFamily: 'Georgia, serif' }}
             >
               Recently Added
             </h2>
-            <p className="text-sm font-ui mb-5.5" style={{ color: '#8A6A4A' }}>
+            <p className="text-sm font-ui mb-7" style={{ color: '#8A6A4A' }}>
               Freshly imported sermons across all themes.
             </p>
             <SermonList sermons={latest} loading={loading} />
