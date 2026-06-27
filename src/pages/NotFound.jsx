@@ -15,16 +15,17 @@ export default function NotFound() {
         </p>
         <h1
           className="text-2xl font-bold mb-3"
-          style={{ color: '#8B4513', fontFamily: 'Georgia, serif' }}
+          style={{ color: '#2A1004', fontFamily: 'Georgia, serif' }}
         >
           Page not found
         </h1>
-        <p className="text-muted font-ui mb-8 text-sm">
+        <p className="font-ui mb-8 text-sm" style={{ color: '#8A6A4A' }}>
           The page you're looking for doesn't exist or has been moved.
         </p>
         <Link
           to="/"
-          className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white font-ui font-medium rounded-xl hover:bg-accent transition-colors"
+          className="inline-flex items-center gap-2 px-6 py-3 text-white font-ui font-medium rounded-full hover:bg-accent transition-colors"
+          style={{ backgroundColor: '#2A1004' }}
         >
           Back to Home
         </Link>

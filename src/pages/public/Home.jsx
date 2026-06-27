@@ -45,31 +45,57 @@ export default function Home() {
     <div className="min-h-screen bg-background">
       {/* Hero */}
       <div
-        className="relative py-7 px-4 text-center"
+        className="text-center"
         style={{
-          background: 'linear-gradient(135deg, #FAF6F0 0%, #F5EBE0 50%, #FAF6F0 100%)',
+          background: 'linear-gradient(140deg, #2A1004 0%, #4E1C08 55%, #3A1806 100%)',
+          padding: '80px 64px',
         }}
       >
         <div className="max-w-2xl mx-auto">
           <img
             src="/branding/besorah_primary_logo.svg"
             alt="Besorah — Good News, Organised by Theme"
-            className="h-[4.5rem] sm:h-[5.5rem] md:h-24 w-auto mx-auto mb-3"
+            className="w-auto mx-auto"
+            style={{ height: 148, marginBottom: 24 }}
           />
           <p
-            className="text-base mb-2 font-normal italic"
-            style={{ color: '#A0856B', fontFamily: 'Georgia, serif' }}
+            className="italic mb-3.5"
+            style={{
+              fontFamily: 'Georgia, serif',
+              fontSize: 15,
+              color: '#D4A017',
+              letterSpacing: '0.08em',
+            }}
           >
-            בְּשׂוֹרָה — Good News, Organised by Theme
+            בְּשׂוֹרָה · Good News, Organised by Theme
           </p>
-          <p className="text-base text-muted font-ui mb-5 max-w-md mx-auto">
-            Discover Christian sermons curated by theme. Find preaching that speaks to where you are.
+          <p
+            className="font-ui mx-auto"
+            style={{
+              fontSize: 16,
+              color: '#C8B090',
+              maxWidth: 440,
+              lineHeight: 1.65,
+              marginBottom: 44,
+            }}
+          >
+            Discover Christian sermons curated by theme. Find preaching that speaks to where you are in your faith journey.
           </p>
-          <SearchBar />
+          <SearchBar variant="dark" />
+          <p className="font-ui mt-5" style={{ fontSize: 13, color: 'rgba(200,176,144,0.55)' }}>
+            New to the faith?{' '}
+            <Link
+              to="/pillar/salvation"
+              className="underline"
+              style={{ color: '#D4A017', textUnderlineOffset: 3 }}
+            >
+              Start with Salvation →
+            </Link>
+          </p>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-12">
+      <div className="max-w-6xl mx-auto px-4 sm:px-16 py-13">
         {error && (
           <div className="mb-10 rounded-2xl border border-red-100 bg-red-50 p-6 text-center">
             <p className="text-sm text-red-800 font-ui mb-3">{error}</p>
@@ -83,38 +109,21 @@ export default function Home() {
           </div>
         )}
 
-        <section className="mb-10 rounded-2xl border border-amber-100 bg-white/90 p-6 sm:p-8 shadow-soft">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <p
-              className="text-xl sm:text-2xl font-bold"
-              style={{ color: '#8B4513', fontFamily: 'Georgia, serif' }}
-            >
-              New to the faith? Start here.
-            </p>
-            <Link
-              to="/pillar/salvation"
-              className="inline-flex items-center justify-center px-5 py-2.5 bg-primary text-white text-sm font-ui font-medium rounded-full hover:bg-accent transition-colors"
-            >
-              Start Here
-            </Link>
-          </div>
-        </section>
-
         {/* Pillars */}
-        <section className="mb-14">
+        <section className="mb-15">
           <h2
-            className="text-2xl font-bold mb-2"
-            style={{ color: '#8B4513', fontFamily: 'Georgia, serif' }}
+            className="text-[26px] font-bold mb-1.5"
+            style={{ color: '#2A1004', fontFamily: 'Georgia, serif' }}
           >
             Browse by Theme
           </h2>
-          <p className="text-muted text-sm font-ui mb-6">
+          <p className="text-sm font-ui mb-5.5" style={{ color: '#8A6A4A' }}>
             Explore our core themes and choose one to dive into sermons.
           </p>
           {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
               {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="h-36 bg-card-bg rounded-2xl animate-pulse" />
+                <div key={i} className="h-36 bg-surface rounded-[14px] animate-pulse" />
               ))}
             </div>
           ) : (
@@ -124,14 +133,14 @@ export default function Home() {
 
         {/* Popular */}
         {popular.length > 0 && (
-          <section className="mb-14">
+          <section className="mb-15">
             <h2
-              className="text-2xl font-bold mb-2"
-              style={{ color: '#8B4513', fontFamily: 'Georgia, serif' }}
+              className="text-[26px] font-bold mb-1.5"
+              style={{ color: '#2A1004', fontFamily: 'Georgia, serif' }}
             >
               Popular Sermons
             </h2>
-            <p className="text-muted text-sm font-ui mb-6">
+            <p className="text-sm font-ui mb-5.5" style={{ color: '#8A6A4A' }}>
               Most listened-to and watched sermons on Besorah.
             </p>
             <SermonList sermons={popular} loading={false} />
@@ -142,12 +151,12 @@ export default function Home() {
         {(latest.length > 0 || loading) && (
           <section>
             <h2
-              className="text-2xl font-bold mb-2"
-              style={{ color: '#8B4513', fontFamily: 'Georgia, serif' }}
+              className="text-[26px] font-bold mb-1.5"
+              style={{ color: '#2A1004', fontFamily: 'Georgia, serif' }}
             >
               Recently Added
             </h2>
-            <p className="text-muted text-sm font-ui mb-6">
+            <p className="text-sm font-ui mb-5.5" style={{ color: '#8A6A4A' }}>
               Freshly imported sermons across all themes.
             </p>
             <SermonList sermons={latest} loading={loading} />

@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import { ExternalLink, Calendar, User, Church, Video, Headphones } from 'lucide-react';
 
 function formatDate(dateStr) {
   if (!dateStr) return null;
@@ -13,81 +12,85 @@ function formatDate(dateStr) {
 export default function SermonCard({ sermon, pillars = [] }) {
   const { id, title, preacher, church, date_preached, image_url, external_url } = sermon;
   const platform = (sermon.platform || '').toLowerCase();
-  const externalCtaLabel = platform === 'youtube'
-    ? 'Watch on YouTube'
-    : platform === 'spotify'
-      ? 'Listen on Spotify'
-      : 'Open Source';
-  const CtaIcon = platform === 'youtube'
-    ? Video
-    : platform === 'spotify'
-      ? Headphones
-      : ExternalLink;
+  const ctaLabel = platform === 'youtube' ? 'Watch' : 'Listen';
+  const firstPillar = pillars[0];
 
   return (
-    <div className="bg-card-bg rounded-2xl overflow-hidden shadow-soft hover:shadow-card transition-all duration-200 hover:-translate-y-0.5 border border-amber-50">
-      {image_url && (
+    <div
+      className="overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_20px_rgba(58,24,6,0.09)]"
+      style={{
+        backgroundColor: '#FBF4E8',
+        border: '1px solid rgba(180, 130, 70, 0.14)',
+        borderRadius: 14,
+        boxShadow: '0 2px 12px rgba(58, 24, 6, 0.06)',
+      }}
+    >
+      {image_url ? (
         <img
           src={image_url}
           alt={title}
-          className="w-full h-36 object-cover"
+          className="w-full object-cover"
+          style={{ height: 156 }}
         />
+      ) : (
+        <div
+          className="flex items-center justify-center"
+          style={{
+            height: 156,
+            background: 'repeating-linear-gradient(135deg, #E8D8C0 0px, #E8D8C0 14px, #DFCDB4 14px, #DFCDB4 28px)',
+          }}
+        >
+          <span className="font-mono text-[10px] uppercase tracking-widest" style={{ color: '#A08060' }}>
+            sermon image
+          </span>
+        </div>
       )}
 
-      <div className="p-5">
+      <div style={{ padding: '16px 18px' }}>
         <Link to={`/sermon/${id}`}>
-          <h3 className="font-bold text-text-main hover:text-primary transition-colors leading-snug mb-2 line-clamp-2" style={{ fontFamily: 'Georgia, serif' }}>
+          <h3
+            className="font-bold leading-[1.45] mb-2.5 line-clamp-2 hover:opacity-80 transition-opacity"
+            style={{ fontFamily: 'Georgia, serif', fontSize: 14, color: '#1A0E06', margin: '0 0 10px' }}
+          >
             {title}
           </h3>
         </Link>
 
-        <div className="space-y-1 mb-3">
+        <div className="flex flex-col gap-0.5 mb-3">
           {preacher && (
-            <div className="flex items-center gap-1.5 text-xs text-muted font-ui">
-              <User size={11} />
-              <span>{preacher}</span>
-            </div>
+            <span className="font-ui text-xs font-medium" style={{ color: '#6A4A2A' }}>
+              {preacher}
+            </span>
           )}
-          {church && (
-            <div className="flex items-center gap-1.5 text-xs text-muted font-ui">
-              <Church size={11} />
-              <span>{church}</span>
-            </div>
-          )}
-          {date_preached && (
-            <div className="flex items-center gap-1.5 text-xs text-muted font-ui">
-              <Calendar size={11} />
-              <span>{formatDate(date_preached)}</span>
-            </div>
+          {(church || date_preached) && (
+            <span className="font-ui text-[11px]" style={{ color: '#9A7A5A' }}>
+              {[church, formatDate(date_preached)].filter(Boolean).join(' · ')}
+            </span>
           )}
         </div>
 
-        {pillars.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-3">
-            {pillars.map((p) => (
-              <Link
-                key={p.id}
-                to={`/pillar/${p.slug}`}
-                className="text-xs px-2 py-0.5 rounded-full text-white font-ui font-medium hover:opacity-80 transition-opacity"
-                style={{ backgroundColor: p.color }}
-              >
-                {p.name}
-              </Link>
-            ))}
-          </div>
-        )}
-
-        {external_url && (
-          <a
-            href={external_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs text-accent hover:text-primary font-ui font-medium transition-colors"
-          >
-            <span>{externalCtaLabel}</span>
-            <CtaIcon size={11} />
-          </a>
-        )}
+        <div className="flex items-center justify-between">
+          {firstPillar && (
+            <Link
+              to={`/pillar/${firstPillar.slug}`}
+              className="text-[11px] font-ui font-semibold px-2.5 py-0.5 rounded-full text-white hover:opacity-80 transition-opacity"
+              style={{ backgroundColor: firstPillar.color }}
+            >
+              {firstPillar.name}
+            </Link>
+          )}
+          {external_url && (
+            <a
+              href={external_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-ui font-medium transition-colors hover:opacity-80"
+              style={{ color: '#C17B3F' }}
+            >
+              {ctaLabel} →
+            </a>
+          )}
+        </div>
       </div>
     </div>
   );

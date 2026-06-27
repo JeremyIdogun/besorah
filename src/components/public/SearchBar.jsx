@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search } from 'lucide-react';
 
-export default function SearchBar({ initialValue = '', onSearch, placeholder = 'Search sermons, preachers, churches…' }) {
+export default function SearchBar({ initialValue = '', onSearch, placeholder = 'Search by title, preacher or church…', variant = 'light' }) {
   const [value, setValue] = useState(initialValue);
   const navigate = useNavigate();
 
@@ -16,22 +15,38 @@ export default function SearchBar({ initialValue = '', onSearch, placeholder = '
     }
   }
 
+  const isDark = variant === 'dark';
+
   return (
-    <form onSubmit={handleSubmit} className="relative w-full max-w-xl mx-auto">
-      <Search
-        size={18}
-        className="absolute left-4 top-1/2 -translate-y-1/2 text-muted pointer-events-none"
-      />
+    <form
+      onSubmit={handleSubmit}
+      className="flex items-center w-full max-w-[520px] mx-auto"
+      style={{
+        background: isDark ? 'rgba(255,255,255,0.07)' : '#FBF4E8',
+        border: isDark ? '1px solid rgba(212,160,23,0.30)' : '1px solid rgba(180,130,70,0.14)',
+        borderRadius: 100,
+        padding: '10px 10px 10px 24px',
+      }}
+    >
       <input
         type="text"
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder={placeholder}
-        className="w-full pl-11 pr-28 py-3 rounded-full border border-amber-200 bg-white text-text-main placeholder-muted text-sm font-ui shadow-soft focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition"
+        className={`flex-1 bg-transparent border-none outline-none text-[15px] font-ui ${isDark ? 'search-input-dark' : 'search-input-light'}`}
+        style={{ color: isDark ? '#C8B090' : '#1A0E06' }}
       />
       <button
         type="submit"
-        className="absolute right-2 top-1/2 -translate-y-1/2 bg-primary text-white text-sm font-ui font-medium px-4 py-1.5 rounded-full hover:bg-accent transition-colors"
+        className="font-ui font-semibold text-sm whitespace-nowrap transition-colors duration-150"
+        style={{
+          background: '#D4A017',
+          color: '#1A0E06',
+          borderRadius: 100,
+          padding: '11px 28px',
+        }}
+        onMouseEnter={(e) => e.currentTarget.style.background = '#C4920E'}
+        onMouseLeave={(e) => e.currentTarget.style.background = '#D4A017'}
       >
         Search
       </button>

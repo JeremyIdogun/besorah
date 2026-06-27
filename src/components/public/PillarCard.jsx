@@ -6,29 +6,40 @@ export default function PillarCard({ pillar }) {
   return (
     <Link
       to={`/pillar/${slug}`}
-      className="group block bg-card-bg rounded-2xl p-6 shadow-soft hover:shadow-card transition-all duration-200 hover:-translate-y-0.5 border border-amber-50"
+      className="group block transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_20px_rgba(58,24,6,0.09)]"
+      style={{
+        backgroundColor: '#FBF4E8',
+        border: '1px solid rgba(180, 130, 70, 0.14)',
+        borderRadius: 14,
+        padding: 20,
+      }}
     >
-      <div className="flex items-start justify-end mb-3">
+      <div className="flex justify-end mb-2.5">
         <span
-          className="text-xs font-ui font-medium px-2 py-1 rounded-full text-white"
+          className="text-[11px] font-ui font-semibold px-2 py-0.5 rounded-full text-white"
           style={{ backgroundColor: color }}
         >
-          {sermon_count ?? 0} sermon{(sermon_count ?? 0) !== 1 ? 's' : ''}
+          {sermon_count ?? 0}
         </span>
       </div>
 
-      <h3
-        className="text-lg font-bold mb-1 group-hover:opacity-80 transition-opacity"
-        style={{ color: color, fontFamily: 'Georgia, serif' }}
+      <span
+        className="block font-bold mb-1.5"
+        style={{ color, fontFamily: 'Georgia, serif', fontSize: 16 }}
       >
         {name}
-      </h3>
+      </span>
 
-      <p className="text-sm text-muted leading-relaxed line-clamp-2">{description}</p>
+      <p
+        className="text-xs font-ui leading-[1.55] line-clamp-2 m-0"
+        style={{ color: '#8A6A4A' }}
+      >
+        {description}
+      </p>
 
       <div
-        className="mt-4 h-0.5 w-8 rounded-full opacity-60 group-hover:w-12 transition-all duration-300"
-        style={{ backgroundColor: color }}
+        className="mt-4 rounded-sm"
+        style={{ width: 32, height: 2, backgroundColor: color }}
       />
     </Link>
   );
