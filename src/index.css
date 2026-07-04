@@ -3,17 +3,22 @@
 @tailwind utilities;
 
 :root {
-  --background: #FAF6F0;
-  --primary: #8B4513;
+  --background: #EAE0D0;
+  --surface: #FBF4E8;
+  --nav-bg: #3A1806;
+  --hero-bg: #2A1004;
+  --primary: #2A1004;
   --accent: #C17B3F;
-  --text: #2C1A0E;
-  --muted: #A0856B;
-  --card-bg: #FFF8F0;
+  --gold: #D4A017;
+  --text-main: #1A0E06;
+  --muted-dark: #9A7A5A;
+  --muted-light: #8A6A4A;
+  --border: rgba(180, 130, 70, 0.14);
 }
 
 body {
   background-color: var(--background);
-  color: var(--text);
+  color: var(--text-main);
   margin: 0;
   -webkit-font-smoothing: antialiased;
 }
@@ -22,6 +27,14 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+}
+
+.search-input-dark::placeholder {
+  color: rgba(200, 176, 144, 0.50);
+}
+
+.search-input-light::placeholder {
+  color: #8A6A4A;
 }
 
 /* Focus-visible for keyboard navigation */

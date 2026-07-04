@@ -59,21 +59,21 @@ export default function Search() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="py-12 px-4 bg-card-bg border-b border-amber-100">
+      <div className="py-12 px-4 sm:px-16 bg-surface" style={{ borderBottom: '1px solid rgba(180,130,70,0.14)' }}>
         <div className="max-w-2xl mx-auto text-center">
           <h1
             className="text-2xl font-bold mb-6"
-            style={{ color: '#8B4513', fontFamily: 'Georgia, serif' }}
+            style={{ color: '#2A1004', fontFamily: 'Georgia, serif' }}
           >
             Search Sermons
           </h1>
-          <SearchBar initialValue={q} onSearch={handleSearch} />
+          <SearchBar initialValue={q} onSearch={handleSearch} variant="light" />
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-10">
+      <div className="max-w-6xl mx-auto px-4 sm:px-16 py-10">
         {error && (
-          <div className="rounded-2xl border border-red-100 bg-red-50 p-6 text-center mb-6">
+          <div className="rounded-[14px] bg-red-50 p-6 text-center mb-6" style={{ border: '1px solid rgba(180,130,70,0.14)' }}>
             <p className="text-sm text-red-800 font-ui mb-3">{error}</p>
             <button
               onClick={() => setSearchParams({ q, page: String(page) })}
@@ -86,7 +86,7 @@ export default function Search() {
         )}
 
         {q && !error && (
-          <p className="text-sm text-muted font-ui mb-6">
+          <p className="text-sm font-ui mb-6" style={{ color: '#8A6A4A' }}>
             {loading
               ? 'Searching…'
               : total === 0
@@ -95,13 +95,12 @@ export default function Search() {
           </p>
         )}
 
-        {/* Empty result suggestions */}
         {q && !loading && !error && total === 0 && searched && (
-          <div className="text-center py-10 text-muted font-ui">
+          <div className="text-center py-10 font-ui" style={{ color: '#8A6A4A' }}>
             <p className="mb-4">No sermons matched your search.</p>
             <div className="flex items-center justify-center gap-3">
               <Link to="/" className="text-sm text-accent hover:text-primary transition-colors">Browse by theme</Link>
-              <span className="text-muted/40">·</span>
+              <span className="opacity-40">·</span>
               <button
                 onClick={() => { setSearchParams({}); setSearched(false); setSermons([]); setTotal(0); }}
                 className="text-sm text-accent hover:text-primary transition-colors"
@@ -113,14 +112,14 @@ export default function Search() {
         )}
 
         {!q && !searched && (
-          <div className="text-center py-16 text-muted font-ui">
-            <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 text-primary">
+          <div className="text-center py-16 font-ui" style={{ color: '#8A6A4A' }}>
+            <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full bg-surface text-primary">
               <SearchIcon size={22} strokeWidth={2.2} aria-hidden="true" />
             </div>
             <p className="mb-6">Enter a search term above to find sermons.</p>
             {pillars.length > 0 && (
               <div>
-                <p className="text-xs text-muted/70 mb-3">Or browse by theme</p>
+                <p className="text-xs opacity-70 mb-3">Or browse by theme</p>
                 <div className="flex flex-wrap justify-center gap-2">
                   {pillars.map((p) => (
                     <Link
@@ -145,7 +144,8 @@ export default function Search() {
             <button
               onClick={() => goToPage(1)}
               disabled={page <= 1}
-              className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-amber-200 text-sm font-ui text-muted hover:text-primary hover:border-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-ui transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:text-primary"
+              style={{ border: '1px solid rgba(180,130,70,0.14)', color: '#9A7A5A' }}
             >
               <ChevronLeft size={15} />
               <ChevronLeft size={15} className="-ml-2" />
@@ -153,18 +153,20 @@ export default function Search() {
             <button
               onClick={() => goToPage(page - 1)}
               disabled={page <= 1}
-              className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-amber-200 text-sm font-ui text-muted hover:text-primary hover:border-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-ui transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:text-primary"
+              style={{ border: '1px solid rgba(180,130,70,0.14)', color: '#9A7A5A' }}
             >
               <ChevronLeft size={15} />
               Prev
             </button>
-            <span className="text-sm font-ui text-muted px-2">
+            <span className="text-sm font-ui px-2" style={{ color: '#9A7A5A' }}>
               Page {page} of {totalPages}
             </span>
             <button
               onClick={() => goToPage(page + 1)}
               disabled={page >= totalPages}
-              className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-amber-200 text-sm font-ui text-muted hover:text-primary hover:border-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-ui transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:text-primary"
+              style={{ border: '1px solid rgba(180,130,70,0.14)', color: '#9A7A5A' }}
             >
               Next
               <ChevronRight size={15} />
@@ -172,7 +174,8 @@ export default function Search() {
             <button
               onClick={() => goToPage(totalPages)}
               disabled={page >= totalPages}
-              className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-amber-200 text-sm font-ui text-muted hover:text-primary hover:border-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-ui transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:text-primary"
+              style={{ border: '1px solid rgba(180,130,70,0.14)', color: '#9A7A5A' }}
             >
               <ChevronRight size={15} />
               <ChevronRight size={15} className="-ml-2" />

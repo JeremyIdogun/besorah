@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { usePostHog } from '@posthog/react';
 import { Link } from 'react-router-dom';
 import { getSpotifyShows, getIngestionRuns, getPendingReviewSermons } from '../../lib/queries';
 import AdminStatsPanel from '../../components/admin/AdminStatsPanel';
@@ -6,6 +7,7 @@ import IngestionRunList from '../../components/admin/IngestionRunList';
 import { Check, ListChecks, PlusCircle, Radio } from 'lucide-react';
 
 export default function Dashboard() {
+  const posthog = usePostHog();
   const [shows, setShows] = useState([]);
   const [runs, setRuns] = useState([]);
   const [pendingCount, setPendingCount] = useState(0);
@@ -31,6 +33,7 @@ export default function Dashboard() {
       method: 'POST',
       credentials: 'include',
     });
+    posthog.reset();
     window.location.href = '/admin/login';
   }
 

@@ -7,6 +7,7 @@ import {
   fetchYouTubePlaylist,
   fetchYouTubeVideosByIds,
 } from '../lib/server/youtube.js';
+import { getPostHogClient } from '../lib/server/posthog.js';
 
 let supabaseClient = null;
 
@@ -310,6 +311,17 @@ async function handleImportPlaylist(req, res) {
   }
 
   const result = await ingestPlaylist({ supabase, playlistId });
+  getPostHogClient().capture({
+    distinctId: 'admin',
+    event: 'youtube_playlist_imported',
+    properties: {
+      playlist_id: playlistId,
+      playlist_title: result.playlist?.title,
+      new_episodes: result.newEpisodes,
+      skipped_episodes: result.skippedExistingEpisodes,
+      failed_episodes: result.failedEpisodes,
+    },
+  });
   return res.status(200).json(result);
 }
 
@@ -327,6 +339,17 @@ async function handleSyncPlaylist(req, res) {
   }
 
   const result = await ingestPlaylist({ supabase, playlistId });
+  getPostHogClient().capture({
+    distinctId: 'admin',
+    event: 'youtube_playlist_synced',
+    properties: {
+      playlist_id: playlistId,
+      playlist_title: result.playlist?.title,
+      new_episodes: result.newEpisodes,
+      skipped_episodes: result.skippedExistingEpisodes,
+      failed_episodes: result.failedEpisodes,
+    },
+  });
   return res.status(200).json(result);
 }
 
@@ -345,6 +368,7 @@ export default async function handler(req, res) {
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unexpected server error';
+    getPostHogClient().captureException(err, 'admin');
     return res.status(500).json({ error: message });
   }
 }

@@ -2,31 +2,32 @@ import { Link } from 'react-router-dom';
 
 export default function Footer() {
   return (
-    <footer className="border-t border-amber-100 bg-card-bg mt-auto">
-      <div className="max-w-5xl mx-auto px-4 py-10">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+    <footer style={{ backgroundColor: '#2A1004', marginTop: 52, padding: '36px 64px' }}>
+      <div className="max-w-6xl mx-auto">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mb-5">
           <div>
             <Link to="/" className="inline-block mb-2">
               <img
                 src="/branding/besorah_primary_logo.svg"
                 alt="Besorah"
-                className="h-7 w-auto"
+                className="w-auto"
+                style={{ height: 26 }}
               />
             </Link>
-            <p className="text-xs text-muted font-ui">
+            <p className="text-xs font-ui" style={{ color: '#9A7A5A' }}>
               Good News, Organised by Theme.
             </p>
           </div>
 
-          <nav className="flex flex-wrap gap-x-6 gap-y-2 text-sm font-ui">
-            <Link to="/" className="text-muted hover:text-primary transition-colors">Home</Link>
-            <Link to="/search" className="text-muted hover:text-primary transition-colors">Search</Link>
-            <Link to="/about" className="text-muted hover:text-primary transition-colors">About</Link>
+          <nav className="flex flex-wrap gap-x-7 gap-y-2 text-sm font-ui">
+            <Link to="/" className="transition-colors duration-150 hover:text-[#FBF0E0]" style={{ color: '#9A7A5A' }}>Home</Link>
+            <Link to="/search" className="transition-colors duration-150 hover:text-[#FBF0E0]" style={{ color: '#9A7A5A' }}>Search</Link>
+            <Link to="/about" className="transition-colors duration-150 hover:text-[#FBF0E0]" style={{ color: '#9A7A5A' }}>About</Link>
           </nav>
         </div>
 
-        <div className="mt-8 pt-6 border-t border-amber-100">
-          <p className="text-xs text-muted/70 font-ui">
+        <div className="pt-5" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+          <p className="text-xs font-ui" style={{ color: '#6A4A2A' }}>
             &copy; {new Date().getFullYear()} Besorah. All rights reserved.
           </p>
         </div>
