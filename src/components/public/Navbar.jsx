@@ -48,6 +48,22 @@ export default function Navbar() {
             Search
           </NavLink>
           <NavLink
+            to="/blog"
+            className={({ isActive }) =>
+              `text-sm font-ui transition-colors duration-150 ${
+                isActive
+                  ? 'font-semibold border-b-2 pb-0.5'
+                  : 'hover:text-[#FBF0E0]'
+              }`
+            }
+            style={({ isActive }) => ({
+              color: isActive ? '#FBF0E0' : '#9A7A5A',
+              borderColor: isActive ? '#D4A017' : 'transparent',
+            })}
+          >
+            Blog
+          </NavLink>
+          <NavLink
             to="/about"
             className={({ isActive }) =>
               `text-sm font-ui transition-colors duration-150 ${

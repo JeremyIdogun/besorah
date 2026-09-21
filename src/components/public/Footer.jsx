@@ -22,6 +22,7 @@ export default function Footer() {
           <nav className="flex flex-wrap gap-x-7 gap-y-2 text-sm font-ui">
             <Link to="/" className="transition-colors duration-150 hover:text-[#FBF0E0]" style={{ color: '#9A7A5A' }}>Home</Link>
             <Link to="/search" className="transition-colors duration-150 hover:text-[#FBF0E0]" style={{ color: '#9A7A5A' }}>Search</Link>
+            <Link to="/blog" className="transition-colors duration-150 hover:text-[#FBF0E0]" style={{ color: '#9A7A5A' }}>Blog</Link>
             <Link to="/about" className="transition-colors duration-150 hover:text-[#FBF0E0]" style={{ color: '#9A7A5A' }}>About</Link>
           </nav>
         </div>

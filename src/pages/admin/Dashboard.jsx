@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { getSpotifyShows, getIngestionRuns, getPendingReviewSermons } from '../../lib/queries';
 import AdminStatsPanel from '../../components/admin/AdminStatsPanel';
 import IngestionRunList from '../../components/admin/IngestionRunList';
-import { Check, ListChecks, PlusCircle, Radio } from 'lucide-react';
+import { Check, ListChecks, Newspaper, PlusCircle, Radio } from 'lucide-react';
 
 export default function Dashboard() {
   const posthog = usePostHog();
@@ -115,6 +115,17 @@ export default function Dashboard() {
               <div>
                 <p className="font-medium text-text-main font-ui">Manage Themes</p>
                 <p className="text-xs text-muted">Create new theme</p>
+              </div>
+            </Link>
+
+            <Link
+              to="/admin/blog"
+              className="flex items-center gap-3 p-5 bg-card-bg rounded-xl shadow-soft border border-amber-50 hover:shadow-card transition-all hover:-translate-y-0.5"
+            >
+              <Newspaper size={20} className="text-accent" />
+              <div>
+                <p className="font-medium text-text-main font-ui">Blog</p>
+                <p className="text-xs text-muted">Articles & clips</p>
               </div>
             </Link>
           </div>

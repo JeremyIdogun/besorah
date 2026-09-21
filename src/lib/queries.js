@@ -174,6 +174,53 @@ export async function getPopularSermons(limit = 3) {
   return (data || []).map((sermon) => withDisplayTitle(sermon));
 }
 
+// ── Blog: public queries ─────────────────────────────────────────────────────
+
+export async function getPublishedPosts({ page = 1, pageSize = 20 } = {}) {
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  const { data, error, count } = await supabase
+    .from('posts')
+    .select('*, pillars(*)', { count: 'exact' })
+    .eq('status', 'published')
+    .order('published_at', { ascending: false })
+    .range(from, to);
+  if (error) throw error;
+
+  return {
+    posts: data || [],
+    total: count ?? 0,
+    page,
+    pageSize,
+  };
+}
+
+export async function getPostBySlug(slug) {
+  const { data, error } = await supabase
+    .from('posts')
+    .select('*, pillars(*)')
+    .eq('slug', slug)
+    .eq('status', 'published')
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function getRelatedPosts(postId, pillarId, limit = 3) {
+  if (!pillarId) return [];
+  const { data, error } = await supabase
+    .from('posts')
+    .select('*, pillars(*)')
+    .eq('pillar_id', pillarId)
+    .eq('status', 'published')
+    .neq('id', postId)
+    .order('published_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data || [];
+}
+
 // ── Admin queries ─────────────────────────────────────────────────────────────
 
 async function adminFetch(path, options = {}) {
@@ -360,5 +407,79 @@ export async function saveAdminSermonReviewsBulk(items) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ items }),
+  });
+}
+
+// ── Blog: admin queries ───────────────────────────────────────────────────────
+
+export async function getAdminPosts() {
+  return adminFetch('/api/blog?action=list');
+}
+
+function postPayload({
+  title,
+  slug,
+  contentType,
+  excerpt,
+  coverImageUrl,
+  body,
+  platform,
+  externalUrl,
+  embedUrl,
+  pillarId,
+  tags,
+}) {
+  return {
+    title,
+    slug,
+    content_type: contentType,
+    excerpt,
+    cover_image_url: coverImageUrl,
+    body,
+    platform,
+    external_url: externalUrl,
+    embed_url: embedUrl,
+    pillar_id: pillarId,
+    tags,
+  };
+}
+
+export async function createAdminPost(post) {
+  return adminFetch('/api/blog?action=create', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(postPayload(post)),
+  });
+}
+
+export async function updateAdminPost({ id, ...post }) {
+  return adminFetch('/api/blog?action=update', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, ...postPayload(post) }),
+  });
+}
+
+export async function publishAdminPost(id) {
+  return adminFetch('/api/blog?action=publish', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id }),
+  });
+}
+
+export async function unpublishAdminPost(id) {
+  return adminFetch('/api/blog?action=unpublish', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id }),
+  });
+}
+
+export async function deleteAdminPost(id) {
+  return adminFetch('/api/blog?action=delete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id }),
   });
 }

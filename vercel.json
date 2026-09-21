@@ -4,6 +4,7 @@
   "rewrites": [
     { "source": "/api/admin/:action", "destination": "/api/admin?action=:action" },
     { "source": "/api/youtube/:action", "destination": "/api/youtube?action=:action" },
+    { "source": "/api/blog/:action", "destination": "/api/blog?action=:action" },
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],

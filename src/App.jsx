@@ -7,6 +7,8 @@ import Pillar from './pages/public/Pillar';
 import Search from './pages/public/Search';
 import SermonDetail from './pages/public/SermonDetail';
 import About from './pages/public/About';
+import Blog from './pages/public/Blog';
+import BlogPost from './pages/public/BlogPost';
 import Dashboard from './pages/admin/Dashboard';
 import AdminLogin from './pages/admin/Login';
 import Shows from './pages/admin/Shows';
@@ -14,6 +16,7 @@ import ReviewQueue from './pages/admin/ReviewQueue';
 import SermonEdit from './pages/admin/SermonEdit';
 import ApprovedSermons from './pages/admin/ApprovedSermons';
 import Themes from './pages/admin/Themes';
+import AdminBlog from './pages/admin/Blog';
 import AdminGate from './components/admin/AdminGate';
 import PostHogAdminIdentity from './components/admin/PostHogAdminIdentity';
 import NotFound from './pages/NotFound';
@@ -76,6 +79,22 @@ export default function App() {
             </PublicLayout>
           }
         />
+        <Route
+          path="/blog"
+          element={
+            <PublicLayout>
+              <Blog />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/blog/:slug"
+          element={
+            <PublicLayout>
+              <BlogPost />
+            </PublicLayout>
+          }
+        />
 
         {/* Admin routes */}
         <Route path="/admin/login" element={<AdminLogin />} />
@@ -116,6 +135,14 @@ export default function App() {
           element={
             <AdminGate>
               <Themes />
+            </AdminGate>
+          }
+        />
+        <Route
+          path="/admin/blog"
+          element={
+            <AdminGate>
+              <AdminBlog />
             </AdminGate>
           }
         />
