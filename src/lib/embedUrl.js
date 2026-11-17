@@ -1,8 +1,15 @@
+const YOUTUBE_ID_RE = /^[A-Za-z0-9_-]{11}$/;
+const INSTAGRAM_CODE_RE = /^[A-Za-z0-9_-]+$/;
+
+function isYouTubeId(value) {
+  return typeof value === 'string' && YOUTUBE_ID_RE.test(value);
+}
+
 function extractYouTubeVideoId(value) {
   const trimmed = String(value || '').trim();
   if (!trimmed) return null;
 
-  if (/^[A-Za-z0-9_-]{11}$/.test(trimmed)) {
+  if (isYouTubeId(trimmed)) {
     return trimmed;
   }
 
@@ -12,18 +19,17 @@ function extractYouTubeVideoId(value) {
 
     if (host === 'youtu.be') {
       const id = url.pathname.split('/').filter(Boolean)[0];
-      return id || null;
+      return isYouTubeId(id) ? id : null;
     }
 
-    if (host.endsWith('youtube.com')) {
+    if (host === 'youtube.com' || host === 'm.youtube.com') {
       const fromQuery = url.searchParams.get('v');
-      if (fromQuery) return fromQuery;
+      if (fromQuery) return isYouTubeId(fromQuery) ? fromQuery : null;
 
       const segments = url.pathname.split('/').filter(Boolean);
       const shortsOrEmbedIndex = segments.findIndex((s) => s === 'shorts' || s === 'embed' || s === 'live');
-      if (shortsOrEmbedIndex !== -1 && segments[shortsOrEmbedIndex + 1]) {
-        return segments[shortsOrEmbedIndex + 1];
-      }
+      const id = shortsOrEmbedIndex !== -1 ? segments[shortsOrEmbedIndex + 1] : null;
+      if (isYouTubeId(id)) return id;
     }
   } catch {
     // Not a parseable URL.
@@ -43,7 +49,7 @@ function extractInstagramShortcode(value) {
 
     const segments = url.pathname.split('/').filter(Boolean);
     const kindIndex = segments.findIndex((s) => s === 'p' || s === 'reel' || s === 'reels' || s === 'tv');
-    if (kindIndex !== -1 && segments[kindIndex + 1]) {
+    if (kindIndex !== -1 && INSTAGRAM_CODE_RE.test(segments[kindIndex + 1] || '')) {
       return { kind: segments[kindIndex] === 'reels' ? 'reel' : segments[kindIndex], code: segments[kindIndex + 1] };
     }
   } catch {

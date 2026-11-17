@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useLocation, useSearchParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { getPublishedPosts } from '../../lib/queries';
 import PostCard from '../../components/public/PostCard';
@@ -10,35 +10,48 @@ const PAGE_SIZE = 12;
 export default function Blog() {
   const { pathname } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
+  const parsedPage = parseInt(searchParams.get('page') || '1', 10);
+  const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
 
-  const [posts, setPosts] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const pillarSlug = searchParams.get('pillar') || null;
+
+  // Results are keyed by the request they answer, so loading is derived rather
+  // than set inside the effect, and stale responses are ignored.
+  const [retryCount, setRetryCount] = useState(0);
+  const requestKey = `${pillarSlug ?? ''}|${page}|${retryCount}`;
+  const [result, setResult] = useState({ key: null, posts: [], total: 0, error: null });
+  const loading = result.key !== requestKey;
+  const posts = loading ? [] : result.posts;
+  const total = loading ? 0 : result.total;
+  const error = loading ? null : result.error;
+  const pillarName = posts[0]?.pillars?.name;
 
   useMeta({
-    title: 'Blog',
+    title: pillarName ? `Blog · ${pillarName}` : 'Blog',
     description: 'Original written teaching and devotional articles, plus short clips from Besorah.',
     url: `${window.location.origin}${pathname}`,
   });
 
-  const fetchPosts = useCallback(() => {
-    setLoading(true);
-    setError(null);
-    getPublishedPosts({ page, pageSize: PAGE_SIZE })
+  useEffect(() => {
+    let cancelled = false;
+    getPublishedPosts({ page, pageSize: PAGE_SIZE, pillarSlug })
       .then(({ posts: results, total: count }) => {
-        setPosts(results);
-        setTotal(count);
+        if (!cancelled) setResult({ key: requestKey, posts: results, total: count, error: null });
       })
-      .catch(() => setError('Some content could not load. Please try again.'))
-      .finally(() => setLoading(false));
-  }, [page]);
-
-  useEffect(() => { fetchPosts(); }, [fetchPosts]);
+      .catch(() => {
+        if (!cancelled) {
+          setResult({ key: requestKey, posts: [], total: 0, error: 'Some content could not load. Please try again.' });
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [page, pillarSlug, requestKey]);
 
   function goToPage(p) {
-    setSearchParams({ page: String(p) });
+    const next = { page: String(p) };
+    if (pillarSlug) next.pillar = pillarSlug;
+    setSearchParams(next);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -59,7 +72,7 @@ export default function Blog() {
             className="text-3xl md:text-4xl font-bold mb-4"
             style={{ color: '#FBF0E0', fontFamily: 'Georgia, serif' }}
           >
-            Blog
+            {pillarName ? `Blog · ${pillarName}` : 'Blog'}
           </h1>
           <p
             className="font-ui mx-auto"
@@ -72,11 +85,18 @@ export default function Blog() {
       </div>
 
       <div className="max-w-6xl mx-auto px-6 sm:px-16 py-14">
+        {pillarSlug && (
+          <div className="mb-8 text-sm font-ui">
+            <Link to="/blog" className="text-accent hover:text-primary transition-colors">
+              ← All posts
+            </Link>
+          </div>
+        )}
         {error && (
           <div className="mb-12 rounded-2xl border border-red-100 bg-red-50 p-6 text-center">
             <p className="text-sm text-red-800 font-ui mb-3">{error}</p>
             <button
-              onClick={fetchPosts}
+              onClick={() => setRetryCount((n) => n + 1)}
               className="inline-flex items-center gap-2 text-sm font-ui font-medium text-red-700 hover:text-red-900 transition-colors"
             >
               <RefreshCw size={14} />

@@ -176,14 +176,23 @@ export async function getPopularSermons(limit = 3) {
 
 // ── Blog: public queries ─────────────────────────────────────────────────────
 
-export async function getPublishedPosts({ page = 1, pageSize = 20 } = {}) {
+// Cards never render the body, so list queries skip it (articles can be long).
+const POST_CARD_COLUMNS =
+  'id, slug, title, excerpt, cover_image_url, content_type, platform, tags, published_at, read_time_minutes, pillar_id';
+
+export async function getPublishedPosts({ page = 1, pageSize = 20, pillarSlug = null } = {}) {
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 
-  const { data, error, count } = await supabase
+  let query = supabase
     .from('posts')
-    .select('*, pillars(*)', { count: 'exact' })
-    .eq('status', 'published')
+    .select(`${POST_CARD_COLUMNS}, ${pillarSlug ? 'pillars!inner(*)' : 'pillars(*)'}`, { count: 'exact' })
+    .eq('status', 'published');
+  if (pillarSlug) {
+    query = query.eq('pillars.slug', pillarSlug);
+  }
+
+  const { data, error, count } = await query
     .order('published_at', { ascending: false })
     .range(from, to);
   if (error) throw error;
@@ -211,7 +220,7 @@ export async function getRelatedPosts(postId, pillarId, limit = 3) {
   if (!pillarId) return [];
   const { data, error } = await supabase
     .from('posts')
-    .select('*, pillars(*)')
+    .select(`${POST_CARD_COLUMNS}, pillars(*)`)
     .eq('pillar_id', pillarId)
     .eq('status', 'published')
     .neq('id', postId)

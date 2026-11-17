@@ -2,6 +2,8 @@ import { getAdminSession, requireAdminSession } from '../lib/server/admin-auth.j
 import { createSupabaseAdminClient } from '../lib/server/spotify.js';
 import { getPostHogClient } from '../lib/server/posthog.js';
 import { deriveEmbedUrl } from '../src/lib/embedUrl.js';
+import { slugify } from '../src/lib/slug.js';
+import { estimateReadTime } from '../src/lib/readTime.js';
 
 let supabaseClient = null;
 
@@ -21,24 +23,21 @@ function methodNotAllowed(res) {
   return res.status(405).json({ error: 'Method not allowed' });
 }
 
-function normalizeSlug(value) {
-  return String(value || '')
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
-
 function parseTags(input) {
   const raw = Array.isArray(input) ? input : [];
   const cleaned = raw.map((tag) => String(tag || '').trim()).filter(Boolean);
   return [...new Set(cleaned)];
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function parsePostId(input) {
   const id = String(input || '').trim();
   if (!id) {
     throw new Error('id is required');
+  }
+  if (!UUID_RE.test(id)) {
+    throw new Error('id must be a valid UUID');
   }
   return id;
 }
@@ -53,6 +52,9 @@ function parsePostFields(input) {
   const excerpt = String(input?.excerpt || '').trim() || null;
   const coverImageUrl = String(input?.cover_image_url || '').trim() || null;
   const pillarId = String(input?.pillar_id || '').trim() || null;
+  if (pillarId && !UUID_RE.test(pillarId)) {
+    throw new Error('pillar_id must be a valid UUID');
+  }
   const tags = parseTags(input?.tags);
   const slugInput = String(input?.slug || '').trim();
 
@@ -67,10 +69,12 @@ function parsePostFields(input) {
     platform: null,
     external_url: null,
     embed_url: null,
+    read_time_minutes: null,
   };
 
   if (contentType === 'article') {
     fields.body = String(input?.body || '').trim() || null;
+    fields.read_time_minutes = estimateReadTime(fields.body);
   } else {
     const platform = String(input?.platform || '').trim();
     if (!['youtube', 'instagram'].includes(platform)) {
@@ -80,7 +84,9 @@ function parsePostFields(input) {
     if (!externalUrl) {
       throw new Error('external_url is required for clips');
     }
-    const embedUrl = String(input?.embed_url || '').trim() || deriveEmbedUrl(platform, externalUrl);
+    // Always derive on the server; never trust a client-supplied embed_url,
+    // since it becomes the src of a public iframe.
+    const embedUrl = deriveEmbedUrl(platform, externalUrl);
     if (!embedUrl) {
       throw new Error('Could not derive an embed URL from that link');
     }
@@ -102,6 +108,23 @@ function eventProperties(post) {
   };
 }
 
+function distinctIdFor(session) {
+  return session?.email || 'admin';
+}
+
+function badRequest(res, err) {
+  const message = err instanceof Error ? err.message : 'Invalid request';
+  return res.status(400).json({ error: message });
+}
+
+function notFound(res) {
+  return res.status(404).json({ error: 'Post not found' });
+}
+
+function slugConflict(res) {
+  return res.status(409).json({ error: 'A post with this slug already exists' });
+}
+
 async function handleList(req, res) {
   if (req.method !== 'GET') return methodNotAllowed(res);
   if (!requireAdminSession(req, res)) return;
@@ -121,7 +144,8 @@ async function handleList(req, res) {
 
 async function handleCreate(req, res) {
   if (req.method !== 'POST') return methodNotAllowed(res);
-  if (!requireAdminSession(req, res)) return;
+  const session = requireAdminSession(req, res);
+  if (!session) return;
   const supabase = getSupabase();
 
   let fields;
@@ -129,11 +153,10 @@ async function handleCreate(req, res) {
   try {
     ({ fields, slugInput } = parsePostFields(req.body));
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Invalid request';
-    return res.status(400).json({ error: message });
+    return badRequest(res, err);
   }
 
-  const slug = normalizeSlug(slugInput || fields.title);
+  const slug = slugify(slugInput || fields.title);
   if (!slug) {
     return res.status(400).json({ error: 'A valid slug is required' });
   }
@@ -145,16 +168,12 @@ async function handleCreate(req, res) {
     .single();
 
   if (error) {
-    if (error.code === '23505') {
-      return res.status(409).json({ error: 'A post with this slug already exists' });
-    }
+    if (error.code === '23505') return slugConflict(res);
     return res.status(500).json({ error: error.message });
   }
 
-  const session = getAdminSession(req);
-  const distinctId = session?.email || 'admin';
   getPostHogClient().capture({
-    distinctId,
+    distinctId: distinctIdFor(session),
     event: 'blog_post_created',
     properties: eventProperties(data),
   });
@@ -163,7 +182,8 @@ async function handleCreate(req, res) {
 
 async function handleUpdate(req, res) {
   if (req.method !== 'POST') return methodNotAllowed(res);
-  if (!requireAdminSession(req, res)) return;
+  const session = requireAdminSession(req, res);
+  if (!session) return;
   const supabase = getSupabase();
 
   let id;
@@ -173,13 +193,12 @@ async function handleUpdate(req, res) {
     id = parsePostId(req.body?.id);
     ({ fields, slugInput } = parsePostFields(req.body));
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Invalid request';
-    return res.status(400).json({ error: message });
+    return badRequest(res, err);
   }
 
   const updateFields = { ...fields };
   if (slugInput) {
-    const slug = normalizeSlug(slugInput);
+    const slug = slugify(slugInput);
     if (!slug) {
       return res.status(400).json({ error: 'A valid slug is required' });
     }
@@ -191,19 +210,16 @@ async function handleUpdate(req, res) {
     .update(updateFields)
     .eq('id', id)
     .select('*, pillars(*)')
-    .single();
+    .maybeSingle();
 
   if (error) {
-    if (error.code === '23505') {
-      return res.status(409).json({ error: 'A post with this slug already exists' });
-    }
+    if (error.code === '23505') return slugConflict(res);
     return res.status(500).json({ error: error.message });
   }
+  if (!data) return notFound(res);
 
-  const session = getAdminSession(req);
-  const distinctId = session?.email || 'admin';
   getPostHogClient().capture({
-    distinctId,
+    distinctId: distinctIdFor(session),
     event: 'blog_post_updated',
     properties: eventProperties(data),
   });
@@ -212,38 +228,51 @@ async function handleUpdate(req, res) {
 
 async function setPublishStatus(req, res, status) {
   if (req.method !== 'POST') return methodNotAllowed(res);
-  if (!requireAdminSession(req, res)) return;
+  const session = requireAdminSession(req, res);
+  if (!session) return;
   const supabase = getSupabase();
 
   let id;
   try {
     id = parsePostId(req.body?.id);
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Invalid request';
-    return res.status(400).json({ error: message });
+    return badRequest(res, err);
   }
 
-  const updateFields = {
-    status,
-    published_at: status === 'published' ? new Date().toISOString() : null,
-  };
+  // Keep the original publication date across unpublish/republish cycles.
+  // Public visibility is gated on status, so unpublishing leaves published_at
+  // untouched, and publishing only stamps it the first time.
+  const { data: existing, error: fetchError } = await supabase
+    .from('posts')
+    .select('published_at')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (fetchError) {
+    return res.status(500).json({ error: fetchError.message });
+  }
+  if (!existing) return notFound(res);
+
+  const updateFields = { status };
+  if (status === 'published' && !existing.published_at) {
+    updateFields.published_at = new Date().toISOString();
+  }
 
   const { data, error } = await supabase
     .from('posts')
     .update(updateFields)
     .eq('id', id)
     .select('*, pillars(*)')
-    .single();
+    .maybeSingle();
 
   if (error) {
     return res.status(500).json({ error: error.message });
   }
+  if (!data) return notFound(res);
 
-  const session = getAdminSession(req);
-  const distinctId = session?.email || 'admin';
   if (status === 'published') {
     getPostHogClient().capture({
-      distinctId,
+      distinctId: distinctIdFor(session),
       event: 'blog_post_published',
       properties: eventProperties(data),
     });
@@ -253,15 +282,15 @@ async function setPublishStatus(req, res, status) {
 
 async function handleDelete(req, res) {
   if (req.method !== 'POST') return methodNotAllowed(res);
-  if (!requireAdminSession(req, res)) return;
+  const session = requireAdminSession(req, res);
+  if (!session) return;
   const supabase = getSupabase();
 
   let id;
   try {
     id = parsePostId(req.body?.id);
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Invalid request';
-    return res.status(400).json({ error: message });
+    return badRequest(res, err);
   }
 
   const { data, error } = await supabase
@@ -269,16 +298,15 @@ async function handleDelete(req, res) {
     .delete()
     .eq('id', id)
     .select('*')
-    .single();
+    .maybeSingle();
 
   if (error) {
     return res.status(500).json({ error: error.message });
   }
+  if (!data) return notFound(res);
 
-  const session = getAdminSession(req);
-  const distinctId = session?.email || 'admin';
   getPostHogClient().capture({
-    distinctId,
+    distinctId: distinctIdFor(session),
     event: 'blog_post_deleted',
     properties: eventProperties(data),
   });
@@ -291,25 +319,23 @@ export default async function handler(req, res) {
 
     switch (action) {
       case 'list':
-        return handleList(req, res);
+        return await handleList(req, res);
       case 'create':
-        return handleCreate(req, res);
+        return await handleCreate(req, res);
       case 'update':
-        return handleUpdate(req, res);
+        return await handleUpdate(req, res);
       case 'publish':
-        return setPublishStatus(req, res, 'published');
+        return await setPublishStatus(req, res, 'published');
       case 'unpublish':
-        return setPublishStatus(req, res, 'draft');
+        return await setPublishStatus(req, res, 'draft');
       case 'delete':
-        return handleDelete(req, res);
+        return await handleDelete(req, res);
       default:
         return res.status(404).json({ error: 'Not found' });
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unexpected server error';
-    const session = getAdminSession(req);
-    const distinctId = session?.email || 'admin';
-    getPostHogClient().captureException(err, distinctId);
+    getPostHogClient().captureException(err, distinctIdFor(getAdminSession(req)));
     return res.status(500).json({ error: message });
   }
 }

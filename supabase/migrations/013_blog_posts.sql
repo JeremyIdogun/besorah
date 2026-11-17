@@ -22,6 +22,7 @@ create table if not exists posts (
 create index if not exists posts_status_published_idx on posts (status, published_at desc);
 create index if not exists posts_content_type_idx on posts (content_type);
 
+drop trigger if exists posts_updated_at on posts;
 create trigger posts_updated_at
   before update on posts
   for each row execute procedure update_updated_at();

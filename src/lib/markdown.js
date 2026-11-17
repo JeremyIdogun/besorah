@@ -1,17 +1,24 @@
 import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 
 marked.setOptions({ gfm: true, breaks: false });
 
+// Post bodies are rendered with dangerouslySetInnerHTML, so the HTML marked
+// produces (which passes raw HTML through) must be sanitized first.
+DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+  // Any target (not just _blank) can open a window that gets window.opener.
+  if (node.tagName === 'A' && node.hasAttribute('target')) {
+    node.setAttribute('rel', 'noopener noreferrer');
+  }
+});
+
 export function renderMarkdown(markdown) {
   if (!markdown) return '';
-  return marked.parse(markdown);
+  return DOMPurify.sanitize(marked.parse(markdown), {
+    USE_PROFILES: { html: true },
+    ADD_ATTR: ['target'],
+    FORBID_TAGS: ['style', 'form', 'input', 'button', 'textarea', 'select'],
+  });
 }
 
-export function estimateReadTime(markdown, wordsPerMinute = 200) {
-  const plain = String(markdown || '')
-    .replace(/```[\s\S]*?```/g, ' ')
-    .replace(/[#>*_`~-]/g, ' ')
-    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1');
-  const wordCount = plain.split(/\s+/).filter(Boolean).length;
-  return Math.max(1, Math.round(wordCount / wordsPerMinute));
-}
+export { estimateReadTime } from './readTime';

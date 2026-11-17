@@ -11,6 +11,19 @@ function formatDate(d) {
   return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
+// Defence in depth for rows saved before the server derived embed URLs itself.
+function isTrustedEmbedUrl(value) {
+  try {
+    const url = new URL(value);
+    if (url.protocol !== 'https:') return false;
+    if (url.hostname === 'www.youtube.com') return url.pathname.startsWith('/embed/');
+    if (url.hostname === 'www.instagram.com') return url.pathname.endsWith('/embed');
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 const PROSE_CLASSES = [
   '[&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mt-8 [&_h1]:mb-4 [&_h1]:leading-snug',
   '[&_h2]:text-xl [&_h2]:font-bold [&_h2]:mt-8 [&_h2]:mb-3 [&_h2]:leading-snug',
@@ -30,12 +43,19 @@ const PROSE_CLASSES = [
 export default function BlogPost() {
   const { slug } = useParams();
   const { pathname } = useLocation();
-  const [post, setPost] = useState(null);
-  const [related, setRelated] = useState([]);
-  const [relatedLoading, setRelatedLoading] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  // Results are stored with the slug/post they belong to, so a slow response
+  // for a previous slug can never be shown under the current URL.
+  const [postState, setPostState] = useState({ slug: null, post: null, error: null });
+  const [relatedState, setRelatedState] = useState({ postId: null, posts: [] });
   const [copied, setCopied] = useState(false);
+
+  const loading = postState.slug !== slug;
+  const post = loading ? null : postState.post;
+  const error = loading ? null : postState.error;
+  const postId = post?.id ?? null;
+  const pillarId = post?.pillar_id ?? null;
+  const relatedLoading = Boolean(pillarId) && relatedState.postId !== postId;
+  const related = relatedState.postId === postId ? relatedState.posts : [];
 
   useMeta({
     title: post?.title,
@@ -45,24 +65,33 @@ export default function BlogPost() {
   });
 
   useEffect(() => {
-    setLoading(true);
-    setPost(null);
-    setRelated([]);
-    setError(null);
+    let cancelled = false;
     getPostBySlug(slug)
       .then((p) => {
-        setPost(p);
-        if (p?.pillar_id) {
-          setRelatedLoading(true);
-          getRelatedPosts(p.id, p.pillar_id, 3)
-            .then(setRelated)
-            .catch(() => {})
-            .finally(() => setRelatedLoading(false));
-        }
+        if (!cancelled) setPostState({ slug, post: p, error: null });
       })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+      .catch((err) => {
+        if (!cancelled) setPostState({ slug, post: null, error: err.message });
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [slug]);
+
+  useEffect(() => {
+    if (!postId || !pillarId) return undefined;
+    let cancelled = false;
+    getRelatedPosts(postId, pillarId, 3)
+      .then((posts) => {
+        if (!cancelled) setRelatedState({ postId, posts });
+      })
+      .catch(() => {
+        if (!cancelled) setRelatedState({ postId, posts: [] });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [postId, pillarId]);
 
   if (loading) {
     return (
@@ -93,7 +122,7 @@ export default function BlogPost() {
           {pillar && (
             <>
               <ChevronRight size={13} className="flex-shrink-0" />
-              <Link to={`/pillar/${pillar.slug}`} className="hover:text-primary transition-colors">
+              <Link to={`/blog?pillar=${encodeURIComponent(pillar.slug)}`} className="hover:text-primary transition-colors">
                 {pillar.name}
               </Link>
             </>
@@ -138,7 +167,7 @@ export default function BlogPost() {
                   )}
                   <span className="inline-flex items-center gap-1.5">
                     <Clock size={13} />
-                    {estimateReadTime(post.body)} min read
+                    {post.read_time_minutes ?? estimateReadTime(post.body)} min read
                   </span>
                 </>
               )}
@@ -188,7 +217,7 @@ export default function BlogPost() {
                   </div>
                 )}
 
-                {post.embed_url && (
+                {isTrustedEmbedUrl(post.embed_url) && (
                   <div className="rounded-[14px] overflow-hidden" style={{ position: 'relative', paddingBottom: '56.25%', height: 0 }}>
                     <iframe
                       src={post.embed_url}
@@ -240,7 +269,7 @@ export default function BlogPost() {
                 More in {pillar.name}
               </h2>
               <Link
-                to={`/pillar/${pillar.slug}`}
+                to={`/blog?pillar=${encodeURIComponent(pillar.slug)}`}
                 className="text-sm font-ui text-accent hover:text-primary transition-colors"
               >
                 View all

@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 import { Video, Camera } from 'lucide-react';
-import { estimateReadTime } from '../../lib/markdown';
 
 function formatDate(dateStr) {
   if (!dateStr) return null;
@@ -61,7 +60,7 @@ export default function PostCard({ post }) {
             </span>
           ) : (
             <span className="font-ui text-[11px]" style={{ color: '#9A7A5A' }}>
-              {[formatDate(published_at), `${estimateReadTime(post.body)} min read`].filter(Boolean).join(' · ')}
+              {[formatDate(published_at), post.read_time_minutes ? `${post.read_time_minutes} min read` : null].filter(Boolean).join(' · ')}
             </span>
           )}
         </div>

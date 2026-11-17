@@ -7,6 +7,7 @@ import {
 } from '../lib/server/admin-auth.js';
 import { createSupabaseAdminClient } from '../lib/server/spotify.js';
 import { getPostHogClient } from '../lib/server/posthog.js';
+import { slugify } from '../src/lib/slug.js';
 
 const VALID_REVIEW_STATUSES = new Set(['approved', 'rejected', 'unreviewed']);
 let supabaseClient = null;
@@ -20,14 +21,6 @@ function methodNotAllowed(res) {
   return res.status(405).json({ error: 'Method not allowed' });
 }
 
-function normalizeSlug(value) {
-  return String(value || '')
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
-
 function getSupabase() {
   if (!supabaseClient) {
     supabaseClient = createSupabaseAdminClient();
@@ -38,7 +31,7 @@ function getSupabase() {
 function parsePillarPayload(input) {
   const name = String(input?.name || '').trim();
   const requestedSlug = String(input?.slug || '').trim();
-  const slug = normalizeSlug(requestedSlug || name);
+  const slug = slugify(requestedSlug || name);
   const description = String(input?.description || '').trim();
   const icon = String(input?.icon || '').trim() || null;
   const colorInput = String(input?.color || '').trim();
