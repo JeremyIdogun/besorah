@@ -11,11 +11,13 @@ const PAGE_SIZE = 20;
 export default function Search() {
   const [searchParams, setSearchParams] = useSearchParams();
   const q = searchParams.get('q') || '';
-  const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
+  const parsedPage = parseInt(searchParams.get('page') || '1', 10);
+  const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
 
   // Results are tagged with the query/page they answer; loading is derived
   // from that. The previous results stay visible while the next page loads.
-  const requestKey = `${q}|${page}`;
+  const [attempt, setAttempt] = useState(0);
+  const requestKey = `${q}|${page}|${attempt}`;
   const [result, setResult] = useState({ key: null, sermons: [], total: 0, error: null });
   const loading = Boolean(q) && result.key !== requestKey;
   const searched = Boolean(q) || result.key !== null;
@@ -82,7 +84,7 @@ export default function Search() {
           <div className="rounded-[14px] bg-red-50 p-6 text-center mb-6" style={{ border: '1px solid rgba(180,130,70,0.14)' }}>
             <p className="text-sm text-red-800 font-ui mb-3">{error}</p>
             <button
-              onClick={() => setSearchParams({ q, page: String(page) })}
+              onClick={() => setAttempt((n) => n + 1)}
               className="inline-flex items-center gap-2 text-sm font-ui font-medium text-red-700 hover:text-red-900 transition-colors"
             >
               <RefreshCw size={14} />
