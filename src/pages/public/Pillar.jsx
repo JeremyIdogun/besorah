@@ -13,11 +13,17 @@ export default function Pillar() {
   const [searchParams, setSearchParams] = useSearchParams();
   const rawPage = Number.parseInt(searchParams.get('page') || '1', 10);
   const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
-  const [pillar, setPillar] = useState(null);
-  const [sermons, setSermons] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  // Results are tagged with the slug/page they answer. Loading is derived from
+  // that, and the previous page's data stays visible for the same pillar
+  // while the next page loads.
+  const requestKey = `${slug}|${page}`;
+  const [result, setResult] = useState({ key: null, slug: null, pillar: null, sermons: [], total: 0, error: null });
+  const loading = result.key !== requestKey;
+  const samePillar = result.slug === slug;
+  const pillar = samePillar ? result.pillar : null;
+  const sermons = samePillar ? result.sermons : [];
+  const total = samePillar ? result.total : 0;
+  const error = loading ? null : result.error;
   const [showTop, setShowTop] = useState(false);
 
   useEffect(() => {
@@ -37,27 +43,32 @@ export default function Pillar() {
   });
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
+    let cancelled = false;
     getPillarBySlug(slug)
       .then(async (p) => {
-        setPillar(p);
         const { sermons: results, total: count } = await getSermonsByPillar(p.id, {
           page,
           pageSize: PAGE_SIZE,
         });
+        if (cancelled) return;
         const lastPage = Math.max(1, Math.ceil((count || 0) / PAGE_SIZE));
         if (page > lastPage) {
+          // Changing the URL changes requestKey, which triggers the next load.
           setSearchParams(lastPage === 1 ? {} : { page: String(lastPage) }, { replace: true });
           return;
         }
 
-        setSermons(results);
-        setTotal(count);
+        setResult({ key: requestKey, slug, pillar: p, sermons: results, total: count, error: null });
       })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, [slug, page, setSearchParams]);
+      .catch((err) => {
+        if (!cancelled) {
+          setResult({ key: requestKey, slug, pillar: null, sermons: [], total: 0, error: err.message });
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [slug, page, requestKey, setSearchParams]);
 
   function goToPage(nextPage) {
     setSearchParams(nextPage === 1 ? {} : { page: String(nextPage) });
