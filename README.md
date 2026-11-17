@@ -45,6 +45,9 @@ Run the initial migration and seed:
 - [`supabase/migrations/009_sermon_views.sql`](supabase/migrations/009_sermon_views.sql)
 - [`supabase/migrations/010_popular_sermons_fallback_and_constraints.sql`](supabase/migrations/010_popular_sermons_fallback_and_constraints.sql)
 - [`supabase/migrations/011_lock_approved_sermon_themes.sql`](supabase/migrations/011_lock_approved_sermon_themes.sql)
+- [`supabase/migrations/012_popular_sermons_fill_fallback.sql`](supabase/migrations/012_popular_sermons_fill_fallback.sql)
+- [`supabase/migrations/013_blog_posts.sql`](supabase/migrations/013_blog_posts.sql)
+- [`supabase/migrations/014_blog_post_read_time.sql`](supabase/migrations/014_blog_post_read_time.sql)
 - [`supabase/seed.sql`](supabase/seed.sql)
 
 You can run these using Supabase SQL editor or your local Supabase CLI workflow.
