@@ -7,17 +7,25 @@ export default function TagSelector({
   pillars: providedPillars = null,
   source = 'public',
 }) {
-  const [pillars, setPillars] = useState([]);
+  const usesProvided = Array.isArray(providedPillars);
+  const [loaded, setLoaded] = useState({ source: null, pillars: [] });
+  const pillars = usesProvided
+    ? providedPillars
+    : loaded.source === source ? loaded.pillars : [];
 
   useEffect(() => {
-    if (Array.isArray(providedPillars)) {
-      setPillars(providedPillars);
-      return;
-    }
-
+    if (usesProvided) return undefined;
+    let cancelled = false;
     const loader = source === 'admin' ? getAdminPillars : getPillars;
-    loader().then(setPillars).catch(console.error);
-  }, [providedPillars, source]);
+    loader()
+      .then((results) => {
+        if (!cancelled) setLoaded({ source, pillars: results });
+      })
+      .catch(console.error);
+    return () => {
+      cancelled = true;
+    };
+  }, [usesProvided, source]);
 
   function toggle(id) {
     if (selected.includes(id)) {

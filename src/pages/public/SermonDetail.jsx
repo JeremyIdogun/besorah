@@ -13,12 +13,19 @@ function formatDate(d) {
 export default function SermonDetail() {
   const { id } = useParams();
   const { pathname } = useLocation();
-  const [sermon, setSermon] = useState(null);
-  const [related, setRelated] = useState([]);
-  const [relatedLoading, setRelatedLoading] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  // Results are stored with the id/sermon they belong to, so a slow response
+  // for a previous sermon can never be shown under the current URL.
+  const [sermonState, setSermonState] = useState({ id: null, sermon: null, error: null });
+  const [relatedState, setRelatedState] = useState({ sermonId: null, sermons: [] });
   const [copied, setCopied] = useState(false);
+
+  const loading = sermonState.id !== id;
+  const sermon = loading ? null : sermonState.sermon;
+  const error = loading ? null : sermonState.error;
+  const sermonId = sermon?.id ?? null;
+  const relatedPillarId = sermon?.sermon_pillars?.[0]?.pillar_id ?? null;
+  const relatedLoading = Boolean(relatedPillarId) && relatedState.sermonId !== sermonId;
+  const related = relatedState.sermonId === sermonId ? relatedState.sermons : [];
 
   const firstPillar = sermon?.sermon_pillars?.[0]?.pillars ?? null;
   useMeta({
@@ -29,25 +36,35 @@ export default function SermonDetail() {
   });
 
   useEffect(() => {
-    setLoading(true);
-    setRelated([]);
+    let cancelled = false;
     getSermonById(id)
       .then((s) => {
-        setSermon(s);
-        const pillarId = s?.sermon_pillars?.[0]?.pillar_id;
-        if (pillarId) {
-          setRelatedLoading(true);
-          getRelatedSermons(s.id, pillarId, 3)
-            .then(setRelated)
-            .catch(() => {})
-            .finally(() => setRelatedLoading(false));
-        }
+        if (!cancelled) setSermonState({ id, sermon: s, error: null });
       })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+      .catch((err) => {
+        if (!cancelled) setSermonState({ id, sermon: null, error: err.message });
+      });
 
     void logSermonView(id, 'page_view');
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
+
+  useEffect(() => {
+    if (!sermonId || !relatedPillarId) return undefined;
+    let cancelled = false;
+    getRelatedSermons(sermonId, relatedPillarId, 3)
+      .then((results) => {
+        if (!cancelled) setRelatedState({ sermonId, sermons: results });
+      })
+      .catch(() => {
+        if (!cancelled) setRelatedState({ sermonId, sermons: [] });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [sermonId, relatedPillarId]);
 
   if (loading) {
     return (

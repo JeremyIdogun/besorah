@@ -13,11 +13,14 @@ export default function Search() {
   const q = searchParams.get('q') || '';
   const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
 
-  const [sermons, setSermons] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [searched, setSearched] = useState(false);
-  const [error, setError] = useState(null);
+  // Results are tagged with the query/page they answer; loading is derived
+  // from that. The previous results stay visible while the next page loads.
+  const requestKey = `${q}|${page}`;
+  const [result, setResult] = useState({ key: null, sermons: [], total: 0, error: null });
+  const loading = Boolean(q) && result.key !== requestKey;
+  const searched = Boolean(q) || result.key !== null;
+  const { sermons, total } = result;
+  const error = loading ? null : result.error;
   const [pillars, setPillars] = useState([]);
   const { pathname, search } = useLocation();
 
@@ -31,18 +34,21 @@ export default function Search() {
   });
 
   useEffect(() => {
-    if (!q) return;
-    setLoading(true);
-    setSearched(true);
-    setError(null);
+    if (!q) return undefined;
+    let cancelled = false;
     searchSermons(q, { page, pageSize: PAGE_SIZE })
       .then(({ sermons: results, total: count }) => {
-        setSermons(results);
-        setTotal(count);
+        if (!cancelled) setResult({ key: requestKey, sermons: results, total: count, error: null });
       })
-      .catch(() => setError('Search failed. Please try again.'))
-      .finally(() => setLoading(false));
-  }, [q, page]);
+      .catch(() => {
+        if (!cancelled) {
+          setResult((prev) => ({ ...prev, key: requestKey, error: 'Search failed. Please try again.' }));
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [q, page, requestKey]);
 
   function handleSearch(value) {
     setSearchParams({ q: value });
@@ -102,7 +108,7 @@ export default function Search() {
               <Link to="/" className="text-sm text-accent hover:text-primary transition-colors">Browse by theme</Link>
               <span className="opacity-40">·</span>
               <button
-                onClick={() => { setSearchParams({}); setSearched(false); setSermons([]); setTotal(0); }}
+                onClick={() => { setSearchParams({}); setResult({ key: null, sermons: [], total: 0, error: null }); }}
                 className="text-sm text-accent hover:text-primary transition-colors"
               >
                 Clear search

@@ -10,36 +10,40 @@ import { useMeta } from '../../hooks/useMeta';
 export default function Home() {
   const { pathname } = useLocation();
   useMeta({ url: `${window.location.origin}${pathname}` });
-  const [pillars, setPillars] = useState([]);
-  const [latest, setLatest] = useState([]);
-  const [popular, setPopular] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  // Each load is tagged with the attempt it belongs to; loading is derived from
+  // that instead of being set synchronously inside the effect.
+  const [attempt, setAttempt] = useState(0);
+  const [data, setData] = useState({ attempt: null, pillars: [], latest: [], popular: [], error: null });
+  const loading = data.attempt !== attempt;
+  const { pillars, latest, popular } = data;
+  const error = loading ? null : data.error;
 
-  async function fetchData() {
-    setLoading(true);
-    setError(null);
-    const [pillarsResult, latestResult, popularResult] = await Promise.allSettled([
+  useEffect(() => {
+    let cancelled = false;
+    Promise.allSettled([
       getPillars(),
       getLatestSermons(6),
       getPopularSermons(3),
-    ]);
+    ]).then(([pillarsResult, latestResult, popularResult]) => {
+      if (cancelled) return;
+      const pillarsOk = pillarsResult.status === 'fulfilled';
+      const latestOk = latestResult.status === 'fulfilled';
+      setData({
+        attempt,
+        pillars: pillarsOk ? pillarsResult.value : [],
+        latest: latestOk ? latestResult.value : [],
+        popular: popularResult.status === 'fulfilled' ? popularResult.value : [],
+        error: !pillarsOk || !latestOk ? 'Some content could not load. Please try again.' : null,
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [attempt]);
 
-    const pillarsOk = pillarsResult.status === 'fulfilled';
-    const latestOk = latestResult.status === 'fulfilled';
-
-    setPillars(pillarsOk ? pillarsResult.value : []);
-    setLatest(latestOk ? latestResult.value : []);
-    setPopular(popularResult.status === 'fulfilled' ? popularResult.value : []);
-
-    if (!pillarsOk || !latestOk) {
-      setError('Some content could not load. Please try again.');
-    }
-
-    setLoading(false);
+  function fetchData() {
+    setAttempt((n) => n + 1);
   }
-
-  useEffect(() => { fetchData(); }, []);
 
   return (
     <div className="min-h-screen bg-background">
